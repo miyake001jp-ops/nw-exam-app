@@ -1,5 +1,4 @@
-# GitHub Pages 自動デプロイスクリプト
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $GitPath = "C:\Users\miyak\.gemini\antigravity\scratch\mingit\cmd\git.exe"
 $GhPath = "C:\Users\miyak\.gemini\antigravity\scratch\gh\bin\gh.exe"
@@ -8,28 +7,30 @@ $AppDir = "C:\Users\miyak\.gemini\antigravity\scratch\nw-exam-app"
 Set-Location $AppDir
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "  GitHub Pages 自動セットアップ & デプロイ" -ForegroundColor Green
+Write-Host "  GitHub Pages Automated Deployment" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# 1. ログイン確認
+# 1. Auth check
 $AuthCheck = & $GhPath auth status 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "`n[手順 1/3] GitHub にログインします..." -ForegroundColor Yellow
-    Write-Host "ブラウザが自動的に開きます。画面の指示に従ってログイン・認証（Authorize）を完了してください。`n" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "[STEP 1/3] Logging in to GitHub..." -ForegroundColor Yellow
+    Write-Host "Browser will open. Enter one-time code and click 'Authorize github'." -ForegroundColor Gray
+    Write-Host ""
     & $GhPath auth login -w -p https -h github.com
 }
 
-# ユーザー名取得
+# Get username
 $Username = (& $GhPath api user --jq .login).Trim()
 if (-not $Username) {
-    Write-Host "GitHub ユーザー情報の取得に失敗しました。" -ForegroundColor Red
+    Write-Host "Failed to get GitHub username." -ForegroundColor Red
     exit 1
 }
 
-Write-Host "`n[手順 2/3] リポジトリを作成してプッシュしています (User: $Username)..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "[STEP 2/3] Creating repository & pushing code (User: $Username)..." -ForegroundColor Yellow
 $RepoName = "nw-exam-app"
 
-# リポジトリ存在確認
 $RepoExists = $false
 try {
     & $GhPath repo view "$Username/$RepoName" 2>&1 | Out-Null
@@ -39,10 +40,10 @@ try {
 }
 
 if (-not $RepoExists) {
-    Write-Host "GitHub上に新規パブリックリポジトリ '$RepoName' を作成します..." -ForegroundColor Cyan
+    Write-Host "Creating new public repository '$RepoName' on GitHub..." -ForegroundColor Cyan
     & $GhPath repo create $RepoName --public --source=. --remote=origin --push
 } else {
-    Write-Host "既存のリポジトリ '$RepoName' を更新します..." -ForegroundColor Cyan
+    Write-Host "Updating existing repository '$RepoName'..." -ForegroundColor Cyan
     & $GitPath remote set-url origin "https://github.com/$Username/$RepoName.git" 2>$null
     if ($LASTEXITCODE -ne 0) {
         & $GitPath remote add origin "https://github.com/$Username/$RepoName.git"
@@ -50,23 +51,23 @@ if (-not $RepoExists) {
     & $GitPath push -u origin main --force
 }
 
-# 3. GitHub Pages 設定
-Write-Host "`n[手順 3/3] GitHub Pages を有効化しています..." -ForegroundColor Yellow
+# 3. Enable GitHub Pages
+Write-Host ""
+Write-Host "[STEP 3/3] Enabling GitHub Pages..." -ForegroundColor Yellow
 try {
-    # Pages API を呼び出して main ブランチからの配信を有効化
     & $GhPath api --method POST -H "Accept: application/vnd.github+json" "repos/$Username/$RepoName/pages" -f "source[branch]=main" -f "source[path]=/" 2>&1 | Out-Null
 } catch {
-    # すでに有効化されている場合などはスキップ
+    # Ignored if already enabled
 }
 
 $PagesUrl = "https://${Username}.github.io/${RepoName}/"
 
-Write-Host "`n==========================================================" -ForegroundColor Green
-Write-Host "  GitHub Pages の設定が完了しました！" -ForegroundColor Green
+Write-Host ""
 Write-Host "==========================================================" -ForegroundColor Green
-Write-Host " [スマホ・PC共通URL]: $PagesUrl" -ForegroundColor Cyan
-Write-Host "※ 初回反映まで1〜2分程度かかる場合があります。" -ForegroundColor Gray
+Write-Host "  GitHub Pages Deployment Complete!" -ForegroundColor Green
+Write-Host "==========================================================" -ForegroundColor Green
+Write-Host " [Public URL]: $PagesUrl" -ForegroundColor Cyan
+Write-Host " (Note: Initial deployment may take 1-2 minutes to activate)" -ForegroundColor Gray
 Write-Host "==========================================================" -ForegroundColor Green
 
-# ブラウザで開く
 Start-Process $PagesUrl
