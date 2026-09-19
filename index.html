@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ネットワークスペシャリスト 午前II 対策アプリ</title>
+    <meta name="description" content="ネットワークスペシャリスト試験の午前II対策用学習アプリケーション。過去問分析、予想問題、統計機能付き。">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- PWA Manifest (placeholder) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a73e8">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <!-- QRCode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js" defer></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header for mobile (Hamburger & Title) -->
+        <header class="mobile-header">
+            <button class="menu-toggle" aria-label="メニューを開く" id="menu-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            <h1 class="header-title">NW午前II 対策</h1>
+        </header>
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>ネスペ 午前II</h2>
+                <button class="close-menu" aria-label="メニューを閉じる" id="close-menu">&times;</button>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" data-page="home" class="active">🏠 ホーム</a></li>
+                <li><a href="#" data-page="study">📝 学習モード</a></li>
+                <li><a href="#" data-page="test">🎯 テストモード</a></li>
+                <li><a href="#" data-page="weak">🔄 弱点克服</a></li>
+                <li><a href="#" data-page="stats">📊 統計・分析</a></li>
+                <li><a href="#" data-page="prediction">🔮 予想問題</a></li>
+                <li><a href="#" data-page="settings">⚙️ 設定・同期</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- 1. ホーム (Dashboard) -->
+            <section id="page-home" class="page active">
+                <div class="welcome-banner">
+                    <h2>ネットワークスペシャリスト試験対策</h2>
+                    <p>合格に向けて、今日の学習を始めましょう！</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>総学習問題数</h3>
+                        <p class="stat-value" id="total-learned">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>正答率</h3>
+                        <p class="stat-value" id="overall-accuracy">0%</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>連続学習日数</h3>
+                        <p class="stat-value" id="streak-days">0日</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>合格予測</h3>
+                        <p class="stat-value" id="pass-prediction">判定中</p>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h3>クイックアクション</h3>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="app.navigate('study')">学習を始める</button>
+                        <button class="btn btn-secondary" onclick="app.navigate('test')">テストを受ける</button>
+                        <button class="btn btn-warning" onclick="app.navigate('weak')">弱点を克服</button>
+                    </div>
+                </div>
+
+                <div class="recommendation-section card">
+                    <h3>今日のおすすめ問題</h3>
+                    <p>あなたの学習履歴に基づいたおすすめ問題です。</p>
+                    <button class="btn btn-outline" id="start-recommended">おすすめを解く</button>
+                </div>
+            </section>
+
+            <!-- 2. 学習モード -->
+            <section id="page-study" class="page">
+                <div class="filter-bar card">
+                    <div class="filter-group">
+                        <label for="study-year">年度:</label>
+                        <select id="study-year"><option value="all">すべて</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="study-field">分野:</label>
+                        <select id="study-field"><option value="all">すべて</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="study-subcat">サブカテゴリ:</label>
+                        <select id="study-subcat"><option value="all">すべて</option></select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="study-sort">並び順:</label>
+                        <select id="study-sort">
+                            <option value="asc">出題順</option>
+                            <option value="random">ランダム</option>
+                            <option value="freq">頻出順</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="start-study-btn">開始</button>
+                </div>
+
+                <div id="study-area" class="hidden">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="study-progress"></div>
+                    </div>
+                    <div class="question-container card">
+                        <div class="question-header">
+                            <span class="badge" id="study-q-year">令和5年 春</span>
+                            <span class="badge badge-field" id="study-q-num">問1</span>
+                        </div>
+                        <div class="question-text" id="study-q-text">
+                            問題文がここに表示されます。
+                        </div>
+                        <div class="choices-container" id="study-choices">
+                            <button class="choice-btn" data-choice="ア"><span>ア</span> <div class="choice-text">選択肢ア</div></button>
+                            <button class="choice-btn" data-choice="イ"><span>イ</span> <div class="choice-text">選択肢イ</div></button>
+                            <button class="choice-btn" data-choice="ウ"><span>ウ</span> <div class="choice-text">選択肢ウ</div></button>
+                            <button class="choice-btn" data-choice="エ"><span>エ</span> <div class="choice-text">選択肢エ</div></button>
+                        </div>
+                    </div>
+
+                    <div class="feedback-container card hidden" id="study-feedback">
+                        <h3 id="study-result-title">正解！</h3>
+                        <p><strong>正解: <span id="study-correct-ans"></span></strong></p>
+                        <div class="explanation" id="study-explanation">解説がここに表示されます。</div>
+                        
+                        <div class="history-info" id="study-history-info">
+                            <h4>同一問題の出題履歴</h4>
+                            <ul id="study-history-list"></ul>
+                        </div>
+                    </div>
+
+                    <div class="nav-controls">
+                        <button class="btn btn-outline" id="study-prev-btn" disabled>前の問題</button>
+                        <button class="btn btn-outline" id="study-skip-btn">スキップ</button>
+                        <button class="btn btn-primary" id="study-next-btn">次の問題</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. テストモード -->
+            <section id="page-test" class="page">
+                <div id="test-start-screen" class="card">
+                    <h2>模擬テスト</h2>
+                    <p>実際の試験と同じ形式でテストを行います。</p>
+                    <div class="form-group">
+                        <label for="test-count">問題数:</label>
+                        <select id="test-count">
+                            <option value="25" selected>25問 (本試験と同じ)</option>
+                            <option value="10">10問 (ミニテスト)</option>
+                            <option value="50">50問 (じっくり)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="test-difficulty">難易度:</label>
+                        <select id="test-difficulty">
+                            <option value="random">ランダム</option>
+                            <option value="hard">難問中心</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary btn-large" id="start-test-btn">テスト開始</button>
+                </div>
+
+                <div id="test-area" class="hidden">
+                    <div class="timer-display" id="test-timer">40:00</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="test-progress"></div>
+                    </div>
+                    
+                    <div class="question-container card">
+                        <div class="question-header">
+                            <span class="badge" id="test-q-year">年度</span>
+                            <span class="badge badge-field" id="test-q-num">第1問 / 25問</span>
+                        </div>
+                        <div class="question-text" id="test-q-text"></div>
+                        <div class="choices-container" id="test-choices">
+                            <!-- JS will populate -->
+                        </div>
+                    </div>
+                    
+                    <div class="nav-controls">
+                        <button class="btn btn-outline" id="test-prev-btn">前へ</button>
+                        <button class="btn btn-primary" id="test-next-btn">次へ</button>
+                    </div>
+                    <div class="submit-control">
+                        <button class="btn btn-warning" id="test-submit-btn">テスト終了・採点</button>
+                    </div>
+                </div>
+
+                <div id="test-result-screen" class="hidden card">
+                    <h2>テスト結果</h2>
+                    <div class="result-summary">
+                        <div class="score-circle">
+                            <span id="test-score">0</span>/100
+                        </div>
+                        <h3 id="test-pass-fail">不合格</h3>
+                        <p>所要時間: <span id="test-time-taken">00:00</span></p>
+                    </div>
+                    <button class="btn btn-primary" id="test-review-btn">問題の振り返り</button>
+                    <button class="btn btn-outline" onclick="app.navigate('home')">ホームへ戻る</button>
+                </div>
+            </section>
+
+            <!-- 4. 弱点克服モード -->
+            <section id="page-weak" class="page">
+                <div class="welcome-banner" style="background-color: var(--warning-color); color: #000;">
+                    <h2>弱点克服</h2>
+                    <p>過去に間違えた問題、苦手な分野を重点的に学習します。</p>
+                </div>
+                
+                <div class="card">
+                    <p>現在、あなたが間違えたことのある問題は <strong id="weak-count">0</strong> 問あります。</p>
+                    <button class="btn btn-warning btn-large" id="start-weak-btn">弱点克服を始める</button>
+                </div>
+                
+                <div id="weak-area" class="hidden">
+                    <!-- Shares UI logic with Study mode, populated via JS -->
+                </div>
+            </section>
+
+            <!-- 5. 統計・分析 -->
+            <section id="page-stats" class="page">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="analysis">過去問分析</button>
+                    <button class="tab-btn" data-tab="progress">学習進捗</button>
+                </div>
+
+                <div class="tab-content active" id="tab-analysis">
+                    <div class="chart-container card">
+                        <h3>年度別再出題率</h3>
+                        <canvas id="reappear-chart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container card">
+                        <h3>分野別出題数</h3>
+                        <canvas id="field-chart"></canvas>
+                    </div>
+
+                    <div class="card">
+                        <h3>頻出問題ランキング</h3>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ランク</th>
+                                        <th>問題概要</th>
+                                        <th>出題回数</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="frequent-q-table">
+                                    <!-- JS populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>同一問題対照表</h3>
+                        <details class="collapsible">
+                            <summary>表示する</summary>
+                            <div class="table-responsive">
+                                <table class="data-table" id="same-q-table">
+                                    <!-- JS populated -->
+                                </table>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-progress">
+                    <div class="chart-container card">
+                        <h3>総合正答率推移</h3>
+                        <canvas id="accuracy-chart"></canvas>
+                    </div>
+                    <div class="chart-container card">
+                        <h3>分野別正答率 (レーダーチャート)</h3>
+                        <canvas id="radar-chart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3>弱点分析</h3>
+                        <p id="weakness-analysis-text">データ蓄積中...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. 予想問題 -->
+            <section id="page-prediction" class="page">
+                <div class="welcome-banner" style="background: linear-gradient(135deg, #6b11ff, #9d4edd);">
+                    <h2><span class="badge badge-predict">🔮</span> 予想問題</h2>
+                    <p>近年のトレンド（HTTP/3, QUIC, Wi-Fi 6E, SASE等）を踏まえたオリジナル予想問題です。</p>
+                </div>
+                
+                <div class="card">
+                    <p>最新の技術動向から出題が予想される問題を解くことができます。</p>
+                    <button class="btn btn-primary btn-large" id="start-predict-btn" style="background-color: #6b11ff;">予想問題を解く</button>
+                </div>
+                
+                <div id="predict-area" class="hidden">
+                     <!-- Shares UI logic with Study mode, populated via JS -->
+                </div>
+            </section>
+
+            <!-- 7. 設定・同期 -->
+            <section id="page-settings" class="page">
+                <h2>設定・同期</h2>
+                
+                <div class="card">
+                    <h3>外観</h3>
+                    <div class="setting-item">
+                        <span>ダークモード</span>
+                        <label class="switch">
+                            <input type="checkbox" id="dark-mode-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>データ同期・バックアップ</h3>
+                    <p class="text-small">学習履歴をバックアップしたり、他の端末と同期したりできます。</p>
+                    
+                    <div class="setting-actions">
+                        <button class="btn btn-primary" id="export-btn">データをエクスポート (JSON)</button>
+                        
+                        <div class="file-upload-wrapper">
+                            <button class="btn btn-outline" id="import-btn-proxy">データをインポート</button>
+                            <input type="file" id="import-file" accept=".json" class="hidden-input">
+                        </div>
+                    </div>
+                    
+                    <div class="qr-sync-section">
+                        <h4>QRコードで別端末に同期</h4>
+                        <button class="btn btn-secondary" id="show-qr-btn">QRコードを表示</button>
+                        <div id="qrcode-container" class="hidden">
+                            <!-- QR Code rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>データ管理</h3>
+                    <button class="btn btn-danger" id="reset-data-btn">学習履歴をすべてリセット</button>
+                </div>
+
+                <div class="card">
+                    <h3>アプリについて</h3>
+                    <p>ネットワークスペシャリスト試験 午前II 対策アプリ</p>
+                    <p class="text-small">Version 1.0.0</p>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Bottom Navigation for Mobile -->
+        <nav class="bottom-nav">
+            <a href="#" data-page="home" class="active">
+                <span class="icon">🏠</span>
+                <span class="label">ホーム</span>
+            </a>
+            <a href="#" data-page="study">
+                <span class="icon">📝</span>
+                <span class="label">学習</span>
+            </a>
+            <a href="#" data-page="test">
+                <span class="icon">🎯</span>
+                <span class="label">テスト</span>
+            </a>
+            <a href="#" data-page="stats">
+                <span class="icon">📊</span>
+                <span class="label">分析</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Define files that will be created later -->
+    <script src="js/questions.js" defer></script>
+    <script src="js/study.js" defer></script>
+    <script src="js/statistics.js" defer></script>
+    <script src="js/charts.js" defer></script>
+    <script src="js/sync.js" defer></script>
+    <script src="js/app.js" defer></script>
+</body>
+</html>
