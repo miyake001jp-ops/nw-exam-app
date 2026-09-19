@@ -464,10 +464,15 @@ class App {
       const sameAs = detail.question.sameAs || [];
       if (sameAs.length > 0) {
         histInfo.style.display = 'block';
+        const totalCount = 1 + sameAs.length;
+        const titleEl = histInfo.querySelector('h4');
+        if (titleEl) {
+          titleEl.innerHTML = `🔥 同一問題の出題履歴 <span class="badge" style="background-color: var(--error-color); color: white; margin-left: 0.5rem; font-size: 0.8rem;">過去 計${totalCount}回出題</span>`;
+        }
         histList.innerHTML = sameAs.map(id => {
           const parts = id.split('-');
           const yLabel = parts[0].startsWith('H') ? `平成${parts[0].slice(1)}年` : `令和${parts[0].slice(1)}年`;
-          return `<li>${yLabel} ${parts[1]}</li>`;
+          return `<li><strong>${yLabel} ${parts[1]}</strong>（同一問題・同一解答）</li>`;
         }).join('');
       } else {
         histInfo.style.display = 'none';

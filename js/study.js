@@ -23,6 +23,12 @@ class StudyManager {
       return false;
     }
 
+    // 頻出順(freq)、テストモード、または全年度指定の場合、同一問題の重複を完全排除
+    const isAllYears = (!options.years || options.years.length === 0 || options.years.includes('all'));
+    if (options.sort === 'freq' || this.mode === 'test' || isAllYears) {
+      this.currentQuestions = this.deduplicateQuestions(this.currentQuestions);
+    }
+
     if (this.mode === 'test') {
       const count = options.questionCount || 25;
       this.currentQuestions = this._shuffle([...this.currentQuestions]).slice(0, count);
@@ -33,7 +39,7 @@ class StudyManager {
     } else if (options.sort === 'random') {
       this.currentQuestions = this._shuffle([...this.currentQuestions]);
     } else if (options.sort === 'freq') {
-      // 頻出順: sameAsの多い順
+      // 頻出順: 出題回数(sameAs.length)の多い順に降順ソート
       this.currentQuestions.sort((a, b) => (b.sameAs?.length || 0) - (a.sameAs?.length || 0));
     }
 
@@ -44,6 +50,45 @@ class StudyManager {
 
     this.showQuestion();
     return true;
+  }
+
+  /**
+   * 同一問題グループから代表の1問（最新年度）のみを抽出し、完全重複を排除する
+   */
+  deduplicateQuestions(questions) {
+    // 最新年度の出題を優先して残すため、yearNum降順で事前ソート
+    const sorted = [...questions].sort((a, b) => (b.yearNum || 0) - (a.yearNum || 0));
+    const seen = new Set();
+    const result = [];
+
+    for (const q of sorted) {
+      const key = q.masterId || q.id;
+      let alreadySeen = false;
+
+      if (seen.has(key) || seen.has(q.id)) {
+        alreadySeen = true;
+      }
+
+      if (q.sameAs && Array.isArray(q.sameAs)) {
+        for (const sid of q.sameAs) {
+          if (seen.has(sid)) {
+            alreadySeen = true;
+            break;
+          }
+        }
+      }
+
+      if (!alreadySeen) {
+        seen.add(key);
+        seen.add(q.id);
+        if (q.sameAs && Array.isArray(q.sameAs)) {
+          q.sameAs.forEach(sid => seen.add(sid));
+        }
+        result.push(q);
+      }
+    }
+
+    return result;
   }
 
   showQuestion() {
@@ -105,6 +150,7 @@ class StudyManager {
     const ans = this.answers[this.currentIndex];
 
     let historyText = '';
+    const totalCount = 1 + (q.sameAs ? q.sameAs.length : 0);
     if (q.sameAs && q.sameAs.length > 0) {
       const years = q.sameAs.map(id => {
         const parts = id.split('-');
@@ -112,11 +158,11 @@ class StudyManager {
         const yearLabel = y.startsWith('H') ? `平成${y.slice(1)}年` : `令和${y.slice(1)}年`;
         return `${yearLabel} ${parts[1]}`;
       }).join('、');
-      historyText = `📚 この問題は ${years} にも出題されています。`;
+      historyText = `📚 この問題は過去【計${totalCount}回】出題されている超頻出問題です！（出題履歴: ${years}）`;
     }
 
     document.dispatchEvent(new CustomEvent('render-explanation', {
-      detail: { question: q, answer: ans, historyText }
+      detail: { question: q, answer: ans, historyText, totalAppearances: totalCount }
     }));
   }
 
