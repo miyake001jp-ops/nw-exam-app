@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Continue"
 
 $GitPath = "C:\Users\miyak\.gemini\antigravity\scratch\mingit\cmd\git.exe"
 $GhPath = "C:\Users\miyak\.gemini\antigravity\scratch\gh\bin\gh.exe"
@@ -11,8 +11,13 @@ Write-Host "  GitHub Pages Automated Deployment" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 1. Auth check
-$AuthCheck = & $GhPath auth status 2>&1
-if ($LASTEXITCODE -ne 0) {
+$OldEAP = $ErrorActionPreference
+$ErrorActionPreference = "SilentlyContinue"
+$null = & $GhPath auth status 2>&1
+$NeedsLogin = ($LASTEXITCODE -ne 0)
+$ErrorActionPreference = $OldEAP
+
+if ($NeedsLogin) {
     Write-Host ""
     Write-Host "[STEP 1/3] Logging in to GitHub..." -ForegroundColor Yellow
     Write-Host "Browser will open. Enter one-time code and click 'Authorize github'." -ForegroundColor Gray
@@ -21,9 +26,13 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Get username
-$Username = (& $GhPath api user --jq .login).Trim()
+$Username = ""
+try {
+    $Username = (& $GhPath api user --jq .login 2>$null).Trim()
+} catch {}
+
 if (-not $Username) {
-    Write-Host "Failed to get GitHub username." -ForegroundColor Red
+    Write-Host "Failed to get GitHub username. Please check your login." -ForegroundColor Red
     exit 1
 }
 
@@ -33,7 +42,7 @@ $RepoName = "nw-exam-app"
 
 $RepoExists = $false
 try {
-    & $GhPath repo view "$Username/$RepoName" 2>&1 | Out-Null
+    $null = & $GhPath repo view "$Username/$RepoName" 2>&1
     if ($LASTEXITCODE -eq 0) { $RepoExists = $true }
 } catch {
     $RepoExists = $false
@@ -55,10 +64,8 @@ if (-not $RepoExists) {
 Write-Host ""
 Write-Host "[STEP 3/3] Enabling GitHub Pages..." -ForegroundColor Yellow
 try {
-    & $GhPath api --method POST -H "Accept: application/vnd.github+json" "repos/$Username/$RepoName/pages" -f "source[branch]=main" -f "source[path]=/" 2>&1 | Out-Null
-} catch {
-    # Ignored if already enabled
-}
+    $null = & $GhPath api --method POST -H "Accept: application/vnd.github+json" "repos/$Username/$RepoName/pages" -f "source[branch]=main" -f "source[path]=/" 2>&1
+} catch {}
 
 $PagesUrl = "https://${Username}.github.io/${RepoName}/"
 
