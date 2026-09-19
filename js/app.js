@@ -44,7 +44,7 @@ class App {
 
       // Service Worker 登録
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
       }
 
       console.log(`NW午前II対策アプリ起動完了: ${QUESTIONS_DB.length}問読み込み済み`);
@@ -179,6 +179,7 @@ class App {
 
     // 学習ナビボタン
     document.getElementById('study-next-btn')?.addEventListener('click', () => this.studyManager.nextQuestion());
+    document.getElementById('feedback-next-btn')?.addEventListener('click', () => this.studyManager.nextQuestion());
     document.getElementById('study-prev-btn')?.addEventListener('click', () => this.studyManager.prevQuestion());
     document.getElementById('study-skip-btn')?.addEventListener('click', () => this.studyManager.nextQuestion());
 
@@ -285,6 +286,7 @@ class App {
     document.addEventListener('render-explanation', (e) => this.renderExplanation(e.detail));
     document.addEventListener('timer-tick', (e) => this.updateTimer(e.detail));
     document.addEventListener('render-test-results', (e) => this.renderTestResults(e.detail));
+    document.addEventListener('answer-recorded', () => this.updateDashboard());
     document.addEventListener('session-ended', () => this.onSessionEnded());
   }
 
@@ -392,7 +394,7 @@ class App {
     if (numEl) {
       numEl.textContent = isTest
         ? `第${detail.index + 1}問 / ${detail.total}問`
-        : `問${q.number}`;
+        : `問${q.number} (${detail.index + 1}/${detail.total}問)`;
     }
     if (textEl) textEl.textContent = q.question;
 
@@ -532,17 +534,22 @@ class App {
       const streakEl = document.getElementById('streak-days');
       const passEl = document.getElementById('pass-prediction');
 
-      if (totalEl) totalEl.textContent = answers.length;
+      if (totalEl) totalEl.textContent = `${answers.length}問`;
       if (accEl) accEl.textContent = accuracy.total > 0 ? `${(accuracy.rate * 100).toFixed(1)}%` : '---';
       if (streakEl) streakEl.textContent = `${streak}日`;
 
       if (passEl) {
-        if (accuracy.total >= 50) {
-          const prob = accuracy.rate >= 0.6 ? '合格圏内' : '要努力';
+        if (accuracy.total >= 3) {
+          const pct = Math.round(accuracy.rate * 100);
+          const prob = accuracy.rate >= 0.6 ? `合格圏内 (${pct}%)` : `要努力 (${pct}%)`;
           passEl.textContent = prob;
           passEl.style.color = accuracy.rate >= 0.6 ? 'var(--success-color)' : 'var(--error-color)';
+        } else if (answers.length > 0) {
+          passEl.textContent = `収集中 (${answers.length}/3問)`;
+          passEl.style.color = 'var(--text-muted)';
         } else {
-          passEl.textContent = 'データ蓄積中';
+          passEl.textContent = '未学習';
+          passEl.style.color = 'var(--text-muted)';
         }
       }
 

@@ -86,6 +86,11 @@ class StudyManager {
     // 学習日記録
     await this.db.recordStudyDay();
 
+    // ステータス更新イベントを即時発火
+    document.dispatchEvent(new CustomEvent('answer-recorded', {
+      detail: { questionId: q.id, isCorrect, choice, index: this.currentIndex, total: this.currentQuestions.length }
+    }));
+
     if (this.mode === 'test') {
       // テストモードでは即座に次へ
       setTimeout(() => this.nextQuestion(), 300);

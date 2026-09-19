@@ -1,16 +1,17 @@
-const CACHE_NAME = 'nw-exam-app-v1';
+const CACHE_NAME = 'nw-exam-app-v2';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/js/questions.js',
-  '/js/study.js',
-  '/js/statistics.js',
-  '/js/charts.js',
-  '/js/sync.js',
-  '/manifest.json',
-  'https://cdn.jsdelivr.net/npm/chart.js' // CDNからのChart.jsなど必要なリソースも含めることができます
+  './',
+  './index.html',
+  './css/style.css',
+  './js/app.js',
+  './js/questions.js',
+  './js/study.js',
+  './js/statistics.js',
+  './js/charts.js',
+  './js/sync.js',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 // インストール時にキャッシュする

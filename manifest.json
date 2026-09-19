@@ -2,7 +2,7 @@
   "name": "NW午前II対策",
   "short_name": "NW対策",
   "description": "ネットワークスペシャリスト試験 午前II(科目A-2) 合格対策アプリ",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1a73e8",
   "theme_color": "#1a73e8",
