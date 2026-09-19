@@ -1,8 +1,11 @@
 ﻿$ErrorActionPreference = "Continue"
 
-$GitPath = "C:\Users\miyak\.gemini\antigravity\scratch\mingit\cmd\git.exe"
-$GhPath = "C:\Users\miyak\.gemini\antigravity\scratch\gh\bin\gh.exe"
+$MingitDir = "C:\Users\miyak\.gemini\antigravity\scratch\mingit\cmd"
+$GhDir = "C:\Users\miyak\.gemini\antigravity\scratch\gh\bin"
 $AppDir = "C:\Users\miyak\.gemini\antigravity\scratch\nw-exam-app"
+
+# Add git and gh to current process PATH
+$env:PATH = "$MingitDir;$GhDir;" + $env:PATH
 
 Set-Location $AppDir
 
@@ -13,7 +16,7 @@ Write-Host "==========================================================" -Foregro
 # 1. Auth check
 $OldEAP = $ErrorActionPreference
 $ErrorActionPreference = "SilentlyContinue"
-$null = & $GhPath auth status 2>&1
+$null = & gh auth status 2>&1
 $NeedsLogin = ($LASTEXITCODE -ne 0)
 $ErrorActionPreference = $OldEAP
 
@@ -22,13 +25,13 @@ if ($NeedsLogin) {
     Write-Host "[STEP 1/3] Logging in to GitHub..." -ForegroundColor Yellow
     Write-Host "Browser will open. Enter one-time code and click 'Authorize github'." -ForegroundColor Gray
     Write-Host ""
-    & $GhPath auth login -w -p https -h github.com
+    & gh auth login -w -p https -h github.com
 }
 
 # Get username
 $Username = ""
 try {
-    $Username = (& $GhPath api user --jq .login 2>$null).Trim()
+    $Username = (& gh api user --jq .login 2>$null).Trim()
 } catch {}
 
 if (-not $Username) {
@@ -42,7 +45,7 @@ $RepoName = "nw-exam-app"
 
 $RepoExists = $false
 try {
-    $null = & $GhPath repo view "$Username/$RepoName" 2>&1
+    $null = & gh repo view "$Username/$RepoName" 2>&1
     if ($LASTEXITCODE -eq 0) { $RepoExists = $true }
 } catch {
     $RepoExists = $false
@@ -50,21 +53,21 @@ try {
 
 if (-not $RepoExists) {
     Write-Host "Creating new public repository '$RepoName' on GitHub..." -ForegroundColor Cyan
-    & $GhPath repo create $RepoName --public --source=. --remote=origin --push
+    & gh repo create $RepoName --public --source=. --remote=origin --push
 } else {
     Write-Host "Updating existing repository '$RepoName'..." -ForegroundColor Cyan
-    & $GitPath remote set-url origin "https://github.com/$Username/$RepoName.git" 2>$null
+    & git remote set-url origin "https://github.com/$Username/$RepoName.git" 2>$null
     if ($LASTEXITCODE -ne 0) {
-        & $GitPath remote add origin "https://github.com/$Username/$RepoName.git"
+        & git remote add origin "https://github.com/$Username/$RepoName.git"
     }
-    & $GitPath push -u origin main --force
+    & git push -u origin main --force
 }
 
 # 3. Enable GitHub Pages
 Write-Host ""
 Write-Host "[STEP 3/3] Enabling GitHub Pages..." -ForegroundColor Yellow
 try {
-    $null = & $GhPath api --method POST -H "Accept: application/vnd.github+json" "repos/$Username/$RepoName/pages" -f "source[branch]=main" -f "source[path]=/" 2>&1
+    $null = & gh api --method POST -H "Accept: application/vnd.github+json" "repos/$Username/$RepoName/pages" -f "source[branch]=main" -f "source[path]=/" 2>&1
 } catch {}
 
 $PagesUrl = "https://${Username}.github.io/${RepoName}/"
