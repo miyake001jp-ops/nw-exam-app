@@ -174,7 +174,7 @@ class App {
     // おすすめ問題
     const startRecommended = document.getElementById('start-recommended');
     if (startRecommended) {
-      startRecommended.addEventListener('click', () => this.startStudySession());
+      startRecommended.addEventListener('click', () => this.startRecommendedSession());
     }
 
     // 学習ナビボタン
@@ -321,15 +321,38 @@ class App {
 
     const options = {
       mode: 'study',
-      years: year !== 'all' ? [year] : [],
-      categories: field !== 'all' ? [field] : [],
-      subcategories: subcat !== 'all' ? [subcat] : [],
-      sort: sort
+      years: year && year !== 'all' ? [year] : [],
+      categories: field && field !== 'all' ? [field] : [],
+      subcategories: subcat && subcat !== 'all' ? [subcat] : [],
+      sort: sort || 'asc'
     };
 
     const ok = await this.studyManager.startSession(options);
     if (ok) {
       document.getElementById('study-area')?.classList.remove('hidden');
+    } else {
+      this.showToast('条件に該当する問題がありません。', 'error');
+    }
+  }
+
+  async startRecommendedSession() {
+    // ホーム画面の「おすすめを解く」ボタン用
+    // フィルタドロップダウンに依存せず、ランダム順で全問題を学習
+    const options = {
+      mode: 'study',
+      years: [],
+      categories: [],
+      subcategories: [],
+      sort: 'random'
+    };
+
+    const ok = await this.studyManager.startSession(options);
+    if (ok) {
+      // 学習ページに遷移してUI表示
+      this.navigate('study');
+      document.getElementById('study-area')?.classList.remove('hidden');
+    } else {
+      this.showToast('問題が見つかりませんでした。', 'error');
     }
   }
 
@@ -523,7 +546,10 @@ class App {
   }
 
   onSessionEnded() {
+    // 学習エリアを非表示にし、ホームに戻る
+    document.getElementById('study-area')?.classList.add('hidden');
     this.showToast('学習セッション完了！お疲れさまでした🎉');
+    this.navigate('home');
     this.updateDashboard();
   }
 

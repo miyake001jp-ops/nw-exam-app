@@ -23,10 +23,13 @@ class StudyManager {
       return false;
     }
 
-    // 頻出順(freq)、テストモード、または全年度指定の場合、同一問題の重複を完全排除
-    const isAllYears = (!options.years || options.years.length === 0 || options.years.includes('all'));
-    if (options.sort === 'freq' || this.mode === 'test' || isAllYears) {
-      this.currentQuestions = this.deduplicateQuestions(this.currentQuestions);
+    // ★ 常に同一問題(masterId)の重複を排除する
+    // 同じ問題を繰り返し表示しても学習効率が悪いため、
+    // どのモード・どの並び順でも最新年度の1問だけを残す
+    this.currentQuestions = this.deduplicateQuestions(this.currentQuestions);
+
+    if (this.currentQuestions.length === 0) {
+      return false;
     }
 
     if (this.mode === 'test') {
@@ -39,7 +42,7 @@ class StudyManager {
     } else if (options.sort === 'random') {
       this.currentQuestions = this._shuffle([...this.currentQuestions]);
     } else if (options.sort === 'freq') {
-      // 頻出順: 出題回数(sameAs.length)の多い順に降順ソート
+      // 頻出順: 出題回数(appearances count)の多い順
       this.currentQuestions.sort((a, b) => (b.sameAs?.length || 0) - (a.sameAs?.length || 0));
     }
 
@@ -53,39 +56,30 @@ class StudyManager {
   }
 
   /**
-   * 同一問題グループから代表の1問（最新年度）のみを抽出し、完全重複を排除する
+   * 同一問題グループ(masterId)から代表の1問（最新年度）のみを残し、完全重複を排除する。
+   * 
+   * アルゴリズム:
+   *  1. 全問題を yearNum 降順でソート（最新年度優先）
+   *  2. masterId をキーにした Set で既出チェック
+   *  3. masterId が未出のものだけを結果に含める
    */
   deduplicateQuestions(questions) {
-    // 最新年度の出題を優先して残すため、yearNum降順で事前ソート
+    // 最新年度の出題を優先して残す
     const sorted = [...questions].sort((a, b) => (b.yearNum || 0) - (a.yearNum || 0));
-    const seen = new Set();
+    const seenMasterIds = new Set();
     const result = [];
 
     for (const q of sorted) {
+      // masterId がある場合はそれをキー、なければ id をキーに使う
       const key = q.masterId || q.id;
-      let alreadySeen = false;
 
-      if (seen.has(key) || seen.has(q.id)) {
-        alreadySeen = true;
+      if (seenMasterIds.has(key)) {
+        // この masterId は既に別の年度で追加済み → スキップ
+        continue;
       }
 
-      if (q.sameAs && Array.isArray(q.sameAs)) {
-        for (const sid of q.sameAs) {
-          if (seen.has(sid)) {
-            alreadySeen = true;
-            break;
-          }
-        }
-      }
-
-      if (!alreadySeen) {
-        seen.add(key);
-        seen.add(q.id);
-        if (q.sameAs && Array.isArray(q.sameAs)) {
-          q.sameAs.forEach(sid => seen.add(sid));
-        }
-        result.push(q);
-      }
+      seenMasterIds.add(key);
+      result.push(q);
     }
 
     return result;
@@ -265,18 +259,18 @@ class StudyManager {
 
     let filtered = [...QUESTIONS_DB];
 
-    // 年度フィルタ
-    if (filters.years && filters.years.length > 0) {
+    // 年度フィルタ（"all"や空配列の場合はフィルタしない）
+    if (filters.years && filters.years.length > 0 && !filters.years.includes('all')) {
       filtered = filtered.filter(q => filters.years.includes(q.year));
     }
 
-    // カテゴリフィルタ (questions.jsのフィールド名は category)
-    if (filters.categories && filters.categories.length > 0) {
+    // カテゴリフィルタ
+    if (filters.categories && filters.categories.length > 0 && !filters.categories.includes('all')) {
       filtered = filtered.filter(q => filters.categories.includes(q.category));
     }
 
-    // サブカテゴリフィルタ (questions.jsのフィールド名は subcategory)
-    if (filters.subcategories && filters.subcategories.length > 0) {
+    // サブカテゴリフィルタ
+    if (filters.subcategories && filters.subcategories.length > 0 && !filters.subcategories.includes('all')) {
       filtered = filtered.filter(q => filters.subcategories.includes(q.subcategory));
     }
 
