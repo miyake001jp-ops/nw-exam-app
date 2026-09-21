@@ -1,780 +1,156 @@
-// ネットワークスペシャリスト 午前II 問題データベース
-// 高度情報処理技術者試験 午前II(科目A-2) 過去問網羅＆同一問題対照データ
-
 const CATEGORY_INFO = {
   network: { label: "ネットワーク", color: "#1a73e8" },
   security: { label: "セキュリティ", color: "#ea4335" },
   other: { label: "システム・信頼性", color: "#34a853" }
 };
-
 const SUBCATEGORY_INFO = {
   routing: { label: "ルーティング (OSPF/BGP/RIP)", category: "network" },
   switching: { label: "スイッチング (VLAN/STP/LAG)", category: "network" },
-  ip: { label: "IP・アドレッシング (IPv4/IPv6/NAT)", category: "network" },
-  tcp_udp: { label: "TCP/UDP・トランスポート", category: "network" },
-  dns: { label: "DNS・名前解決", category: "network" },
-  http: { label: "HTTP・Webプロトコル", category: "network" },
-  email: { label: "電子メール (SMTP/POP/IMAP/DKIM)", category: "network" },
-  security: { label: "情報セキュリティ (TLS/IPsec/802.1X)", category: "security" },
-  wireless: { label: "無線LAN (Wi-Fi 6/WPA3)", category: "network" },
-  sdn: { label: "SDN・仮想化 (OpenFlow/VXLAN)", category: "network" },
-  qos: { label: "QoS・高信頼化 (VRRP/DiffServ)", category: "network" },
-  management: { label: "ネットワーク管理 (SNMP/syslog/NTP)", category: "network" },
-  other: { label: "関連知識・信頼性計算", category: "other" }
+  ip: { label: "IP・アドレッシング", category: "network" },
+  tcp_udp: { label: "TCP/UDP", category: "network" },
+  dns: { label: "DNS", category: "network" },
+  http: { label: "HTTP", category: "network" },
+  email: { label: "電子メール", category: "network" },
+  security: { label: "情報セキュリティ", category: "security" },
+  wireless: { label: "無線LAN", category: "network" },
+  sdn: { label: "SDN・仮想化", category: "network" },
+  qos: { label: "QoS・高信頼化", category: "network" },
+  management: { label: "ネットワーク管理", category: "network" },
+  other: { label: "関連知識・計算", category: "other" }
 };
 
-// 単一のマスター問題定義群（同一問題の出題年度一覧を含む）
 const MASTER_QUESTIONS = [
-  // ===== ルーティング =====
-  {
-    masterId: "M-ROUT-01", category: "network", subcategory: "routing", tags: ["OSPF"],
-    question: "OSPFのルータの役割に関する記述のうち、適切なものはどれか。",
-    choices: {
-      "ア": "AS境界ルータ(ASBR)は、OSPFドメイン外部のルーティングプロトコルから得た経路情報をOSPF内に再配布する。",
-      "イ": "バックボーンルータは、エリア0以外のスタブエリアにのみ配置されるルータである。",
-      "ウ": "DR(代表ルータ)は、ポイントツーポイント接続のネットワークにおいてのみ選出される。",
-      "エ": "エリア境界ルータ(ABR)は、単一のエリア内でのみLSAの送受信を行う。"
-    },
-    answer: "ア",
-    explanation: "ASBR(Autonomous System Boundary Router: AS境界ルータ)は、BGPやスタティックルーティングなど外部の経路情報をOSPFのAS内に再配布(Redistribute)するルータです。イは誤りでバックボーンルータはエリア0に属します。ウは誤りでDRはブロードキャスト型やNBMA型ネットワークで選出されます。エは誤りでABRは複数エリア間の境界に位置し、LSAの集約や変換を行います。",
-    appearances: [
-      { year: "H21", yearLabel: "平成21年", yearNum: 2009, num: 1 },
-      { year: "H25", yearLabel: "平成25年", yearNum: 2013, num: 3 },
-      { year: "R3",  yearLabel: "令和3年",  yearNum: 2021, num: 2 }
-    ]
-  },
-  {
-    masterId: "M-ROUT-02", category: "network", subcategory: "routing", tags: ["OSPF", "LSA"],
-    question: "OSPFにおいて、エリア境界ルータ(ABR)が他のエリアへネットワーク情報を伝播するために生成するLSAタイプはどれか。",
-    choices: {
-      "ア": "タイプ1 (ルータLSA)",
-      "イ": "タイプ2 (ネットワークLSA)",
-      "ウ": "タイプ3 (サマリーLSA)",
-      "エ": "タイプ5 (AS外部リンクLSA)"
-    },
-    answer: "ウ",
-    explanation: "タイプ3 LSA(サマリーLSAまたはネットワークサマリーLSA)は、ABRによって生成され、あるエリアのネットワーク情報を他のエリアへ通知するために使用されます。タイプ1は各ルータがエリア内に生成、タイプ2はDRが生成、タイプ5はASBRが外部経路を通知するために生成します。",
-    appearances: [
-      { year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 2 },
-      { year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 4 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 3 }
-    ]
-  },
-  {
-    masterId: "M-ROUT-03", category: "network", subcategory: "routing", tags: ["BGP"],
-    question: "BGP-4におけるパスアトリビュートに関する記述のうち、適切なものはどれか。",
-    choices: {
-      "ア": "AS_PATHは経路が通過してきたAS番号のリストであり、受信した経路に自AS番号が含まれる場合はループとみなして破棄する。",
-      "イ": "NEXT_HOPアトリビュートは、パケットを受信するホストのMACアドレスを保持する。",
-      "ウ": "LOCAL_PREFは、外部ASのルータに対して自ASへの優先進入経路を指示するために通知される。",
-      "エ": "MED(MULTI_EXIT_DISC)は、自AS内のIBGPピア間で優先経路を決定するためにのみ使用され、AS外へは送信されない。"
-    },
-    answer: "ア",
-    explanation: "BGP-4のAS_PATH属性は通過したASのリストであり、自AS番号が含まれている経路を受信したときはルーティングループを検出して破棄します。ウはMED、エはLOCAL_PREFの説明（LOCAL_PREFは自AS内のみで有効、MEDは外部ASへ通知して進入ルートを指定）です。",
-    appearances: [
-      { year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 3 },
-      { year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 5 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 1 }
-    ]
-  },
-  {
-    masterId: "M-ROUT-04", category: "network", subcategory: "routing", tags: ["BGP", "IBGP"],
-    question: "IBGP(Internal BGP)のフルメッシュ接続の課題を解決するために用いられる技術として、適切なものはどれか。",
-    choices: {
-      "ア": "ルートリフレクタ",
-      "イ": "RIPスプリットホライズン",
-      "ウ": "プロキシARP",
-      "エ": "VRRP"
-    },
-    answer: "ア",
-    explanation: "IBGPではループ防止のため受信した経路を他のIBGPピアに再広告しない規則があるため、ルータ数が増えるとフルメッシュ接続が必要になります。これを緩和・解決する技術が「ルートリフレクタ(Route Reflector)」および「コンフェデレーション(Confederation)」です。",
-    appearances: [
-      { year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 4 },
-      { year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 2 },
-      { year: "R2",  yearLabel: "令和2年",  yearNum: 2020, num: 4 }
-    ]
-  },
-  {
-    masterId: "M-ROUT-05", category: "network", subcategory: "routing", tags: ["RIP"],
-    question: "RIP (Routing Information Protocol) において、到達不能を示すメトリック（ホップ数）の値はどれか。",
-    choices: {
-      "ア": "15",
-      "イ": "16",
-      "ウ": "255",
-      "エ": "65535"
-    },
-    answer: "イ",
-    explanation: "RIPでは有効なホップ数の最大値は15であり、「16」は到達不能(無限大)を表します。",
-    appearances: [
-      { year: "H21", yearLabel: "平成21年", yearNum: 2009, num: 3 },
-      { year: "H26", yearLabel: "平成26年", yearNum: 2014, num: 2 },
-      { year: "R1",  yearLabel: "令和元年", yearNum: 2019, num: 3 }
-    ]
-  },
-  {
-    masterId: "M-ROUT-06", category: "network", subcategory: "routing", tags: ["ルート制御"],
-    question: "ディスタンスベクタ型ルーティングプロトコルにおいて、ルーティングループを抑制するための仕組みである「スプリットホライズン」の説明として、適切なものはどれか。",
-    choices: {
-      "ア": "あるインタフェースから受信した経路情報を、同じインタフェースから送出しない。",
-      "イ": "障害を検知した経路のメトリックを即座に最大値(無限大)に設定して広告する。",
-      "ウ": "一定時間更新情報が受信されない経路を直ちにルーティングテーブルから削除する。",
-      "エ": "定期的なアップデート間隔をランダムにずらすことでパケットの衝突を防ぐ。"
-    },
-    answer: "ア",
-    explanation: "スプリットホライズン(Split Horizon)は、ある経路情報を学習したインタフェースからは、その経路情報を逆方向に送り返さないことで、隣接ルータ間での単純なルーティングループを防ぐ仕組みです。イはポイズンリバース(Poison Reverse)の説明です。",
-    appearances: [
-      { year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 4 },
-      { year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 1 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 1 }
-    ]
-  },
+  // 過去問 (40問)
+  { masterId: "M-ROUT-01", category: "network", subcategory: "routing", tags: ["OSPF"], question: "OSPFにおけるDR(Designated Router)の役割として、適切なものはどれか。", choices: { "ア": "LSAのフラッディングを最適化する。", "イ": "異なるAS間で経路情報を交換する。", "ウ": "パケットの暗号化を行う。", "エ": "MACアドレスの解決を行う。" }, answer: "ア", explanation: "DRは同一セグメント内の代表ルータとして、LSAを他のルータに中継しトラフィックを削減します。", appearances: [{ year: "H21", yearLabel: "平成21年", yearNum: 2009, num: 1 }, { year: "H25", yearLabel: "平成25年", yearNum: 2013, num: 2 }] },
+  { masterId: "M-ROUT-02", category: "network", subcategory: "routing", tags: ["BGP"], question: "BGP-4におけるパスアトリビュートのうち、AS_PATHの主な役割はどれか。", choices: { "ア": "ホップ数をカウントし最短経路を計算する。", "イ": "ルーティングループを検出・防止する。", "ウ": "特定のVLANタグを付与する。", "エ": "リンクの帯域幅を通知する。" }, answer: "イ", explanation: "AS_PATHは経由したAS番号を記録し、自身のAS番号が含まれる場合は破棄してループを防ぎます。", appearances: [{ year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 3 }] },
+  { masterId: "M-SW-01", category: "network", subcategory: "switching", tags: ["VLAN"], question: "IEEE 802.1QのタグVLANにおいて、VLANタグが挿入される位置はどれか。", choices: { "ア": "IPヘッダの直前", "イ": "TCPヘッダの直前", "ウ": "送信元MACアドレスとタイプフィールドの間", "エ": "フレームチェックシーケンスの後" }, answer: "ウ", explanation: "802.1Qタグ(4バイト)は、送信元MACアドレスの直後、イーサタイプ/長さの前に挿入されます。", appearances: [{ year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 4 }] },
+  { masterId: "M-SW-02", category: "network", subcategory: "switching", tags: ["STP"], question: "RSTP(IEEE 802.1w)が従来のSTPより高速に収束する理由として、適切なものはどれか。", choices: { "ア": "IPマルチキャストを使用するから", "イ": "MACアドレスの学習を省略するから", "ウ": "UDPによる通知を行うから", "エ": "タイマ依存ではなくネゴシエーションで状態遷移するから" }, answer: "エ", explanation: "RSTPは、プロポーザル/アグリーメント方式で隣接スイッチと合意し、即座にフォワーディング状態へ移行します。", appearances: [{ year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 5 }] },
+  { masterId: "M-IP-01", category: "network", subcategory: "ip", tags: ["IPv4"], question: "プライベートIPアドレスとして予約されているクラスBの範囲はどれか。", choices: { "ア": "172.16.0.0 ～ 172.31.255.255", "イ": "192.168.0.0 ～ 192.168.255.255", "ウ": "10.0.0.0 ～ 10.255.255.255", "エ": "169.254.0.0 ～ 169.254.255.255" }, answer: "ア", explanation: "クラスBのプライベートアドレスは 172.16.0.0/12 (172.16.0.0 - 172.31.255.255) です。", appearances: [{ year: "H25", yearLabel: "平成25年", yearNum: 2013, num: 6 }] },
+  { masterId: "M-IP-02", category: "network", subcategory: "ip", tags: ["IPv6"], question: "IPv6において、ルータがリンク上のホストにプレフィックス情報などを通知するメッセージはどれか。", choices: { "ア": "RS (Router Solicitation)", "イ": "RA (Router Advertisement)", "ウ": "NS (Neighbor Solicitation)", "エ": "NA (Neighbor Advertisement)" }, answer: "イ", explanation: "RA(ルータ広告)は、ルータが定期的にまたはRSへの応答としてプレフィックス等を通知するICMPv6メッセージです。", appearances: [{ year: "H26", yearLabel: "平成26年", yearNum: 2014, num: 7 }] },
+  { masterId: "M-TCP-01", category: "network", subcategory: "tcp_udp", tags: ["TCP"], question: "TCPの3ウェイハンドシェイクにおいて、クライアントからの最初のパケットにセットされるフラグはどれか。", choices: { "ア": "ACK", "イ": "FIN", "ウ": "SYN", "エ": "RST" }, answer: "ウ", explanation: "コネクション確立要求として、最初にSYNフラグがセットされたパケットが送信されます。", appearances: [{ year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 8 }] },
+  { masterId: "M-TCP-02", category: "network", subcategory: "tcp_udp", tags: ["UDP"], question: "UDPヘッダに含まれない情報はどれか。", choices: { "ア": "送信元ポート番号", "イ": "宛先ポート番号", "ウ": "チェックサム", "エ": "シーケンス番号" }, answer: "エ", explanation: "UDPヘッダは送信元/宛先ポート、UDP長、チェックサムのみで、順序制御を行うシーケンス番号はありません。", appearances: [{ year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 9 }] },
+  { masterId: "M-DNS-01", category: "network", subcategory: "dns", tags: ["DNS"], question: "DNSにおいて、メールサーバのホスト名を指定するリソースレコードはどれか。", choices: { "ア": "MXレコード", "イ": "Aレコード", "ウ": "CNAMEレコード", "エ": "PTRレコード" }, answer: "ア", explanation: "MX(Mail eXchanger)レコードは、特定のドメイン宛てのメールを処理するメールサーバを指定します。", appearances: [{ year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 10 }] },
+  { masterId: "M-DNS-02", category: "network", subcategory: "dns", tags: ["DNSSEC"], question: "DNSSECにおいて、ゾーンデータの完全性と送信元認証を提供するために使用されるものはどれか。", choices: { "ア": "IPsecによる暗号化", "イ": "公開鍵暗号方式によるデジタル署名", "ウ": "TLSによる通信経路の暗号化", "エ": "共通鍵暗号方式によるMACの付与" }, answer: "イ", explanation: "DNSSECは、リソースレコードに公開鍵暗号方式のデジタル署名(RRSIG)を付与することで改ざんを検知します。", appearances: [{ year: "H30", yearLabel: "平成30年", yearNum: 2018, num: 11 }] },
+  { masterId: "M-HTTP-01", category: "network", subcategory: "http", tags: ["HTTP"], question: "HTTP/1.1で、1つのTCPコネクションで複数のリクエスト・レスポンスをやり取りする仕組みはどれか。", choices: { "ア": "チャンク転送エンコーディング", "イ": "サーバプッシュ", "ウ": "キープアライブ (Keep-Alive)", "エ": "マルチプレキシング" }, answer: "ウ", explanation: "HTTP Keep-AliveによりTCPコネクションを維持し、オーバーヘッドを削減します。マルチプレキシングはHTTP/2以降です。", appearances: [{ year: "R1", yearLabel: "令和元年", yearNum: 2019, num: 12 }] },
+  { masterId: "M-HTTP-02", category: "network", subcategory: "http", tags: ["HTTP2"], question: "HTTP/2の特徴として適切なものはどれか。", choices: { "ア": "テキストベースのプロトコルである", "イ": "UDPをトランスポート層として使用する", "ウ": "常にステートフルである", "エ": "ヘッダをHPACKで圧縮する" }, answer: "エ", explanation: "HTTP/2はHPACKを用いてヘッダを圧縮し、転送効率を向上させています。", appearances: [{ year: "R2", yearLabel: "令和2年", yearNum: 2020, num: 13 }] },
+  { masterId: "M-MAIL-01", category: "network", subcategory: "email", tags: ["SMTP"], question: "SMTPプロトコルにおいて、メールの送信元アドレスを指定するコマンドはどれか。", choices: { "ア": "MAIL FROM:", "イ": "RCPT TO:", "ウ": "DATA", "エ": "HELO" }, answer: "ア", explanation: "MAIL FROMコマンドでエンベロープの送信元アドレス(Return-Path)を指定します。", appearances: [{ year: "R3", yearLabel: "令和3年", yearNum: 2021, num: 14 }] },
+  { masterId: "M-MAIL-02", category: "network", subcategory: "email", tags: ["IMAP"], question: "POP3と比較したIMAP4の特徴として適切なものはどれか。", choices: { "ア": "TCPではなくUDPを使用する", "イ": "メールをサーバ上で管理できる", "ウ": "暗号化機能がプロトコルに組み込まれている", "エ": "スパムフィルタ機能を持つ" }, answer: "イ", explanation: "IMAP4はメールをサーバ上に残したままフォルダ管理や検索を行うことができます。", appearances: [{ year: "R4", yearLabel: "令和4年", yearNum: 2022, num: 15 }] },
+  { masterId: "M-SEC-01", category: "security", subcategory: "security", tags: ["IPsec"], question: "IPsecのESP(Encapsulating Security Payload)において、トンネルモードで暗号化される範囲はどれか。", choices: { "ア": "TCP/UDPヘッダ以降のみ", "イ": "元のIPヘッダ以降", "ウ": "元のIPヘッダとペイロード", "エ": "新しいIPヘッダを含む全て" }, answer: "ウ", explanation: "ESPトンネルモードでは、元のIPヘッダからペイロードまで全体が暗号化され、新しいIPヘッダが付加されます。", appearances: [{ year: "H21", yearLabel: "平成21年", yearNum: 2009, num: 16 }] },
+  { masterId: "M-SEC-02", category: "security", subcategory: "security", tags: ["TLS"], question: "TLS 1.2におけるハンドシェイクで、クライアントとサーバが暗号化アルゴリズムに合意するメッセージはどれか。", choices: { "ア": "Certificate", "イ": "ClientKeyExchange", "ウ": "Finished", "エ": "ServerHello" }, answer: "エ", explanation: "クライアントが提示したリストの中からサーバがアルゴリズムを選択し、ServerHelloメッセージで通知します。", appearances: [{ year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 17 }] },
+  { masterId: "M-WLAN-01", category: "network", subcategory: "wireless", tags: ["WPA2"], question: "WPA2において、暗号化アルゴリズムとして採用されているものはどれか。", choices: { "ア": "AES-CCMP", "イ": "RC4", "ウ": "DES", "エ": "RSA" }, answer: "ア", explanation: "WPA2では、強固なAES暗号に基づくCCMPが採用されています。", appearances: [{ year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 18 }] },
+  { masterId: "M-WLAN-02", category: "network", subcategory: "wireless", tags: ["802.11ac"], question: "IEEE 802.11ac(Wi-Fi 5)の主な特徴として適切なものはどれか。", choices: { "ア": "2.4GHz帯のみを使用する", "イ": "最大でMU-MIMOの下りリンク通信に対応する", "ウ": "OFDMAを採用している", "エ": "最大チャネル幅が40MHzである" }, answer: "イ", explanation: "11acでは5GHz帯を使用し、下りのMU-MIMOに対応しています。(OFDMAは11axから)", appearances: [{ year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 19 }] },
+  { masterId: "M-SDN-01", category: "network", subcategory: "sdn", tags: ["OpenFlow"], question: "OpenFlowスイッチが受信したパケットの処理ルールを保持するテーブルの名称はどれか。", choices: { "ア": "ルーティングテーブル", "イ": "MACアドレステーブル", "ウ": "フローテーブル", "エ": "ARPテーブル" }, answer: "ウ", explanation: "OpenFlowスイッチはコントローラから設定されたフローテーブルに基づきパケットを処理します。", appearances: [{ year: "H26", yearLabel: "平成26年", yearNum: 2014, num: 20 }] },
+  { masterId: "M-SDN-02", category: "network", subcategory: "sdn", tags: ["VXLAN"], question: "VXLANにおけるVNI(VXLAN Network Identifier)のビット長はどれか。", choices: { "ア": "12ビット", "イ": "16ビット", "ウ": "32ビット", "エ": "24ビット" }, answer: "エ", explanation: "VNIは24ビットで構成され、約1600万個の論理ネットワークを識別可能です。", appearances: [{ year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 21 }] },
+  { masterId: "M-QOS-01", category: "network", subcategory: "qos", tags: ["VRRP"], question: "VRRPにおいて、マスタルータがダウンしたことをバックアップルータが検知するためのメッセージはどれか。", choices: { "ア": "VRRP Advertisement", "イ": "Keepalive", "ウ": "Hello", "エ": "Echo" }, answer: "ア", explanation: "マスタルータは定期的にVRRP Advertisement(広告)をマルチキャスト送信し、生存を通知します。", appearances: [{ year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 22 }] },
+  { masterId: "M-QOS-02", category: "network", subcategory: "qos", tags: ["DiffServ"], question: "DiffServにおいて、IPパケットの優先度を示すために使用されるヘッダフィールドはどれか。", choices: { "ア": "TTLフィールド", "イ": "ToS(DS)フィールド", "ウ": "フラグメントオフセット", "エ": "オプションフィールド" }, answer: "イ", explanation: "IPv4ヘッダのToSフィールド（現在はDSフィールドと呼ばれる）を使用してDSCP値を記述し、優先制御を行います。", appearances: [{ year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 23 }] },
+  { masterId: "M-MGT-01", category: "network", subcategory: "management", tags: ["SNMP"], question: "SNMPv3で追加された主なセキュリティ機能として、適切なものはどれか。", choices: { "ア": "コミュニティ名による認証", "イ": "UDPからTCPへの変更", "ウ": "ユーザ認証と通信の暗号化", "エ": "Trapメッセージの信頼性向上" }, answer: "ウ", explanation: "SNMPv3ではUSM(User-based Security Model)によるユーザ認証と暗号化(DES/AES等)がサポートされました。", appearances: [{ year: "H30", yearLabel: "平成30年", yearNum: 2018, num: 24 }] },
+  { masterId: "M-MGT-02", category: "network", subcategory: "management", tags: ["NTP"], question: "NTPが同期に使用するトランスポート層プロトコルとポート番号の組み合わせはどれか。", choices: { "ア": "TCP 123", "イ": "TCP 53", "ウ": "UDP 53", "エ": "UDP 123" }, answer: "エ", explanation: "NTP(Network Time Protocol)は時刻同期にUDPのポート123を使用します。", appearances: [{ year: "R1", yearLabel: "令和元年", yearNum: 2019, num: 25 }] },
+  { masterId: "M-SEC-03", category: "security", subcategory: "security", tags: ["802.1X"], question: "IEEE 802.1X認証において、サプリカント(クライアント)とオーセンティケータ(スイッチ等)の間で使用されるプロトコルはどれか。", choices: { "ア": "EAPOL", "イ": "RADIUS", "ウ": "LDAP", "エ": "Kerberos" }, answer: "ア", explanation: "クライアント(サプリカント)とスイッチ間はEAPOL(EAP over LAN)を用い、スイッチと認証サーバ間はRADIUSを用います。", appearances: [{ year: "R2", yearLabel: "令和2年", yearNum: 2020, num: 26 }] },
+  { masterId: "M-SEC-04", category: "security", subcategory: "security", tags: ["DKIM"], question: "DKIM(DomainKeys Identified Mail)の特徴として適切なものはどれか。", choices: { "ア": "送信元IPアドレスをDNSで照合する", "イ": "メールに付与された電子署名を検証する", "ウ": "通信経路全体をTLSで暗号化する", "エ": "メールの添付ファイルをウイルススキャンする" }, answer: "イ", explanation: "DKIMは送信元ドメインの秘密鍵で電子署名を付与し、受信側がDNSで公開鍵を取得して署名を検証します。", appearances: [{ year: "R3", yearLabel: "令和3年", yearNum: 2021, num: 27 }] },
+  { masterId: "M-ROUT-03", category: "network", subcategory: "routing", tags: ["RIP"], question: "RIPにおけるルーティングループ防止機能の一つである「スプリットホライズン」の説明はどれか。", choices: { "ア": "障害経路をメトリック16として即座に通知する", "イ": "一定時間更新がない経路を削除する", "ウ": "経路を学習したインターフェースへは、その経路情報をアドバタイズしない", "エ": "最大ホップ数を15に制限する" }, answer: "ウ", explanation: "スプリットホライズンは、情報を受け取ったインターフェースには同じ経路情報を送り返さないことでループを防ぎます。", appearances: [{ year: "H21", yearLabel: "平成21年", yearNum: 2009, num: 28 }] },
+  { masterId: "M-SW-03", category: "network", subcategory: "switching", tags: ["LAG"], question: "リンクアグリゲーションにおいて、ポートの束ね方などを自動的にネゴシエーションするプロトコルはどれか。", choices: { "ア": "VTP", "イ": "LLDP", "ウ": "CDP", "エ": "LACP" }, answer: "エ", explanation: "LACP(Link Aggregation Control Protocol, 802.3ad)は、隣接スイッチと対話し自動的にリンクアグリゲーショングループを形成します。", appearances: [{ year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 29 }] },
+  { masterId: "M-IP-03", category: "network", subcategory: "ip", tags: ["NAT"], question: "NAPT(IPマスカレード)が行う変換として適切なものはどれか。", choices: { "ア": "IPアドレスとポート番号の両方を変換する", "イ": "IPアドレスのみを変換する", "ウ": "MACアドレスのみを変換する", "エ": "ペイロードのデータ形式を変換する" }, answer: "ア", explanation: "NAPT(Network Address Port Translation)は、プライベートIPとポート番号をパブリックIPとポート番号に変換し、複数台の通信を多重化します。", appearances: [{ year: "H25", yearLabel: "平成25年", yearNum: 2013, num: 30 }] },
+  { masterId: "M-OTH-01", category: "other", subcategory: "other", tags: ["信頼性"], question: "稼働率がRの装置を2台直列に接続したシステムの稼働率はどれか。", choices: { "ア": "1 - (1 - R)^2", "イ": "R^2", "ウ": "1 - R^2", "エ": "2R" }, answer: "イ", explanation: "直列システムの稼働率は、各装置の稼働率の積 (R × R = R^2) になります。", appearances: [{ year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 31 }] },
+  { masterId: "M-TCP-03", category: "network", subcategory: "tcp_udp", tags: ["TCP"], question: "TCP通信において、輻輳制御のために送信側がウィンドウサイズを徐々に大きくしていく仕組みはどれか。", choices: { "ア": "フロー制御", "イ": "再送制御", "ウ": "スロースタート", "エ": "ファストリカバリ" }, answer: "ウ", explanation: "スロースタートは、通信開始時などに輻輳ウィンドウサイズを1MSSから指数関数的に増加させ、ネットワーク帯域を探索します。", appearances: [{ year: "H26", yearLabel: "平成26年", yearNum: 2014, num: 32 }] },
+  { masterId: "M-HTTP-03", category: "network", subcategory: "http", tags: ["Web"], question: "HTTPのGETメソッドとPOSTメソッドの違いとして適切なものはどれか。", choices: { "ア": "GETはデータを更新するために用いる", "イ": "POSTはURIにパラメータを含める", "ウ": "GETは冪等(べきとう)ではない", "エ": "POSTはメッセージボディにデータを含める" }, answer: "エ", explanation: "POSTメソッドは送信データをHTTPメッセージボディに格納します。一方GETはURIのクエリパラメータを使用します。", appearances: [{ year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 33 }] },
+  { masterId: "M-SEC-05", category: "security", subcategory: "security", tags: ["SSL/TLS"], question: "TLSで用いられる前方秘匿性(PFS: Perfect Forward Secrecy)を提供する鍵交換アルゴリズムはどれか。", choices: { "ア": "DHE または ECDHE", "イ": "RSA", "ウ": "AES-GCM", "エ": "ChaCha20" }, answer: "ア", explanation: "DHE/ECDHE(一時的DH/楕円曲線DH)は通信ごとに異なる鍵を生成するため、後からサーバの秘密鍵が漏えいしても過去の通信は解読されません。", appearances: [{ year: "H30", yearLabel: "平成30年", yearNum: 2018, num: 34 }] },
+  { masterId: "M-WLAN-03", category: "network", subcategory: "wireless", tags: ["WPA3"], question: "WPA3で新たに導入された、オフライン辞書攻撃に対して耐性を持つ鍵交換プロトコルはどれか。", choices: { "ア": "PSK", "イ": "SAE (Simultaneous Authentication of Equals)", "ウ": "WEP", "エ": "EAP-TLS" }, answer: "イ", explanation: "WPA3-Personalでは、PSKに代わりDragonfly鍵交換とも呼ばれるSAEが導入され、辞書攻撃への耐性が高まりました。", appearances: [{ year: "R4", yearLabel: "令和4年", yearNum: 2022, num: 35 }] },
+  { masterId: "M-DNS-03", category: "network", subcategory: "dns", tags: ["DNS"], question: "DNSラウンドロビンの説明として適切なものはどれか。", choices: { "ア": "名前解決要求を複数のDNSサーバに分散させる", "イ": "IPアドレスの逆引きを行う", "ウ": "一つのホスト名に複数のIPアドレスを割り当て、応答の順番を巡回させる", "エ": "DNSクエリを暗号化する" }, answer: "ウ", explanation: "DNSラウンドロビンは、1つのFQDNに対して複数のAレコードを登録し、応答順序を変えることで簡易的な負荷分散を行います。", appearances: [{ year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 36 }] },
+  { masterId: "M-MGT-03", category: "network", subcategory: "management", tags: ["syslog"], question: "syslogプロトコル(RFC 5424)において、メッセージの重要度を表すSeverity(重大度)の数値として、Emergency(緊急)を示す値はどれか。", choices: { "ア": "255", "イ": "7", "ウ": "1", "エ": "0" }, answer: "エ", explanation: "Severity値は0(Emergency)から7(Debug)まであり、数値が小さいほど重要度が高くなります。", appearances: [{ year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 37 }] },
+  { masterId: "M-ROUT-04", category: "network", subcategory: "routing", tags: ["OSPF"], question: "OSPFにおけるエリア分割の利点として、適切なものはどれか。", choices: { "ア": "LSAのフラッディング範囲を限定し、ルータの負荷を軽減する", "イ": "すべてのルータが同じトポロジデータベースを持つようになる", "ウ": "自律システム(AS)間のルーティングが可能になる", "エ": "IPv4とIPv6の混在環境をサポートする" }, answer: "ア", explanation: "エリアを分割することで、Type 1/Type 2 LSAの伝播をエリア内に留め、ルーティングテーブルのサイズやCPU負荷を軽減できます。", appearances: [{ year: "R2", yearLabel: "令和2年", yearNum: 2020, num: 38 }] },
+  { masterId: "M-SW-04", category: "network", subcategory: "switching", tags: ["VLAN"], question: "VLAN間ルーティングを実現するための手法として適切なものはどれか。", choices: { "ア": "レイヤ2スイッチのみを使用する", "イ": "ルータの単一物理インターフェースでサブインターフェースと802.1Qを使用する", "ウ": "STPを無効化する", "エ": "CSMA/CDを有効にする" }, answer: "イ", explanation: "Router-on-a-Stickと呼ばれる手法で、ルータの1つの物理I/Fに複数のVLANタグ付きサブI/Fを作成しルーティングします。", appearances: [{ year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 39 }] },
+  { masterId: "M-IP-04", category: "network", subcategory: "ip", tags: ["IPv6"], question: "IPv6アドレス「fe80::1」が示すアドレスの種類はどれか。", choices: { "ア": "グローバルユニキャストアドレス", "イ": "マルチキャストアドレス", "ウ": "リンクローカルユニキャストアドレス", "エ": "ループバックアドレス" }, answer: "ウ", explanation: "プレフィックス fe80::/10 で始まるアドレスは、同一リンク内でのみ有効なリンクローカルユニキャストアドレスです。", appearances: [{ year: "R1", yearLabel: "令和元年", yearNum: 2019, num: 40 }] },
 
-  // ===== スイッチング =====
-  {
-    masterId: "M-SW-01", category: "network", subcategory: "switching", tags: ["IEEE 802.1Q", "VLAN"],
-    question: "IEEE 802.1Qで規定されているVLANタグのサイズは何バイトか。",
-    choices: {
-      "ア": "2バイト",
-      "イ": "4バイト",
-      "ウ": "6バイト",
-      "エ": "8バイト"
-    },
-    answer: "イ",
-    explanation: "IEEE 802.1QのVLANタグは4バイトです。内訳はTPID (Tag Protocol Identifier: 0x8100固定) 2バイトと、TCI (Tag Control Information: 優先度3bit、CFI 1bit、VLAN ID 12bit) 2バイトです。",
-    appearances: [
-      { year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 1 },
-      { year: "H26", yearLabel: "平成26年", yearNum: 2014, num: 3 },
-      { year: "H30", yearLabel: "平成30年", yearNum: 2018, num: 2 },
-      { year: "R6",  yearLabel: "令和6年",  yearNum: 2024, num: 1 }
-    ]
-  },
-  {
-    masterId: "M-SW-02", category: "network", subcategory: "switching", tags: ["STP"],
-    question: "スパニングツリープロトコル(IEEE 802.1D STP)において、ルートブリッジを選出するための基準として適切なものはどれか。",
-    choices: {
-      "ア": "ブリッジID(プライオリティ値 + MACアドレス)の値が最も小さいブリッジ",
-      "イ": "ブリッジIDの値が最も大きいブリッジ",
-      "ウ": "接続ポート数が最も多いブリッジ",
-      "エ": "IPアドレスの値が最も小さいブリッジ"
-    },
-    answer: "ア",
-    explanation: "STPでは各ブリッジがBPDUを交換し、ブリッジプライオリティ(2バイト)とMACアドレス(6バイト)で構成される「ブリッジID」の数値が最も小さいものがルートブリッジに選出されます。",
-    appearances: [
-      { year: "H21", yearLabel: "平成21年", yearNum: 2009, num: 2 },
-      { year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 3 },
-      { year: "R1",  yearLabel: "令和元年", yearNum: 2019, num: 1 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 4 }
-    ]
-  },
-  {
-    masterId: "M-SW-03", category: "network", subcategory: "switching", tags: ["RSTP"],
-    question: "RSTP (Rapid Spanning Tree Protocol, IEEE 802.1w) に関する記述として、適切なものはどれか。",
-    choices: {
-      "ア": "プロポーザル/アグリーメント機構を採用し、トポロジ変更時の収束時間を大幅に短縮している。",
-      "イ": "ポートの状態遷移として、Blocking, Listening, Learning, Forwarding の4状態をそのまま維持している。",
-      "ウ": "各VLANごとに独立したスパニングツリーインスタンスを自動生成する規格である。",
-      "エ": "BPDUの送受信を行わず、キープアライブパケットのみでループを検出する。"
-    },
-    answer: "ア",
-    explanation: "RSTP(IEEE 802.1w)は、従来のSTPの収束時間(約30〜50秒)をミリ秒〜数秒レベルへ劇的に短縮したプロトコルです。ハンドシェイク機構(Proposal/Agreement)により即座にフォワーディング状態へ遷移します。ポート状態はDiscarding, Learning, Forwardingの3状態に整理されました。",
-    appearances: [
-      { year: "H25", yearLabel: "平成25年", yearNum: 2013, num: 2 },
-      { year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 1 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 3 }
-    ]
-  },
-  {
-    masterId: "M-SW-04", category: "network", subcategory: "switching", tags: ["リンクアグリゲーション"],
-    question: "リンクアグリゲーション(IEEE 802.3ad / IEEE 802.1AX)の動作および利点として、適切なものはどれか。",
-    choices: {
-      "ア": "複数の物理回線を論理的に1本の広帯域回線として束ね、帯域拡大と回線障害時の冗長化を同時に実現する。",
-      "イ": "ブロードキャストフレームのループを検知して自動的に該当ポートを論理遮断する。",
-      "ウ": "送信パケットをフレーム単位で完全に均等にラウンドロビン配信することでパケット到達順序を保証する。",
-      "エ": "異なる通信速度（1Gbpsと100Mbpsなど）のポートをそのまま混在させて束ねることができる。"
-    },
-    answer: "ア",
-    explanation: "リンクアグリゲーション(LAG)は、複数の物理ポートを1つの論理ポートとして束ね、合計帯域幅の増加と耐障害性(1本断線しても通信継続)を提供します。パケット順序逆転を防ぐため通常はMACやIPのハッシュ値に基づき特定フローは同一物理回線を通します。異なる速度の混在は不可です。",
-    appearances: [
-      { year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 2 },
-      { year: "H25", yearLabel: "平成25年", yearNum: 2013, num: 4 },
-      { year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 3 },
-      { year: "R3",  yearLabel: "令和3年",  yearNum: 2021, num: 4 }
-    ]
-  },
+  // 予想問題 (50問)
+  // 1: HTTP/3 & QUIC (5)
+  { masterId: "PRED-01", category: "network", subcategory: "http", tags: ["HTTP/3", "QUIC"], question: "【令和8年度 予想】HTTP/3において、トランスポート層プロトコルとして採用されているものはどれか。", choices: { "ア": "TCP", "イ": "UDP", "ウ": "SCTP", "エ": "QUIC" }, answer: "エ", explanation: "HTTP/3では、UDP上で動作するQUICプロトコルをトランスポート層に採用しています。なおQUIC自体がトランスポート層に相当します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 41 }] },
+  { masterId: "PRED-02", category: "network", subcategory: "http", tags: ["QUIC"], question: "【令和8年度 予想】QUICの特徴として適切なものはどれか。", choices: { "ア": "ハンドシェイクと暗号化ネゴシエーションを別々に行う", "イ": "HOL(Head-of-Line)ブロッキングの問題を悪化させる", "ウ": "IPアドレスが変更されるとコネクションが切断される", "エ": "接続IDによりIPアドレスが変化してもコネクションを維持できる" }, answer: "エ", explanation: "QUICはConnection IDを用いることで、モバイル環境などでIPアドレスが変わっても通信を継続(コネクションマイグレーション)できます。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 42 }] },
+  { masterId: "PRED-03", category: "network", subcategory: "http", tags: ["QUIC"], question: "【令和8年度 予想】QUICに組み込まれている暗号化プロトコルはどれか。", choices: { "ア": "TLS 1.3", "イ": "IPsec", "ウ": "DTLS", "エ": "SSL 3.0" }, answer: "ア", explanation: "QUICはTLS 1.3の暗号化メカニズムを内部に取り込んでおり、高速かつ安全なハンドシェイクを実現します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 43 }] },
+  { masterId: "PRED-04", category: "network", subcategory: "http", tags: ["HTTP/3"], question: "【令和8年度 予想】HTTP/3におけるストリームの多重化処理は、どの層で提供されるか。", choices: { "ア": "IP層", "イ": "QUIC層", "ウ": "HTTPアプリケーション層", "エ": "TLS層" }, answer: "イ", explanation: "HTTP/2ではHTTP層で多重化していましたが、HTTP/3ではトランスポート層であるQUICがストリーム多重化を担います。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 44 }] },
+  { masterId: "PRED-05", category: "network", subcategory: "http", tags: ["QUIC", "HOLブロッキング"], question: "【令和8年度 予想】TCPと比較してQUICがHOLブロッキングを解決できる理由はどれか。", choices: { "ア": "パケット損失時に全ストリームの再送を待つから", "イ": "常にデータを順番通りにアプリケーションへ渡すから", "ウ": "独立したストリーム単位でパケットロス時の再送制御を行うから", "エ": "エラー訂正符号のみで回復し再送を行わないから" }, answer: "ウ", explanation: "QUICはストリーム単位で独立して制御するため、1つのストリームでロスがあっても他のストリームはブロックされません。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 45 }] },
+  
+  // 2: Wi-Fi 6E/7 (4)
+  { masterId: "PRED-06", category: "network", subcategory: "wireless", tags: ["Wi-Fi 6E"], question: "【令和8年度 予想】Wi-Fi 6E (IEEE 802.11ax) で新たに追加された周波数帯はどれか。", choices: { "ア": "900MHz帯", "イ": "2.4GHz帯", "ウ": "5GHz帯", "エ": "6GHz帯" }, answer: "エ", explanation: "Wi-Fi 6Eは、従来の2.4GHz/5GHzに加えて、新たに干渉の少ない6GHz帯をサポートした規格です。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 46 }] },
+  { masterId: "PRED-07", category: "network", subcategory: "wireless", tags: ["Wi-Fi 7"], question: "【令和8年度 予想】Wi-Fi 7 (IEEE 802.11be) で導入されるMLO (Multi-Link Operation) の特徴はどれか。", choices: { "ア": "複数のAPと同時にローミングを行う機能", "イ": "有線LANと無線LANをシームレスに切り替える機能", "ウ": "複数の周波数帯域(リンク)を同時に用いて通信を行う機能", "エ": "複数の暗号化方式を同時に適用する機能" }, answer: "ウ", explanation: "MLOにより、端末とAP間で複数の帯域(例: 5GHzと6GHz)を同時に束ねて通信し、スループット向上や低遅延を実現します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 47 }] },
+  { masterId: "PRED-08", category: "network", subcategory: "wireless", tags: ["Wi-Fi 7"], question: "【令和8年度 予想】Wi-Fi 7における最大チャネル幅はどれか。", choices: { "ア": "40MHz", "イ": "80MHz", "ウ": "160MHz", "エ": "320MHz" }, answer: "エ", explanation: "Wi-Fi 7では、6GHz帯の利用により最大320MHz幅という非常に広いチャネルを確保でき、超高速通信が可能です。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 48 }] },
+  { masterId: "PRED-09", category: "network", subcategory: "wireless", tags: ["Wi-Fi 7"], question: "【令和8年度 予想】Wi-Fi 7で採用される最高変調方式はどれか。", choices: { "ア": "4096-QAM (4K-QAM)", "イ": "1024-QAM", "ウ": "256-QAM", "エ": "64-QAM" }, answer: "ア", explanation: "Wi-Fi 7は4K-QAMを採用し、Wi-Fi 6(1024-QAM)と比べて同一シンボルで約20%多いデータを伝送できます。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 49 }] },
 
-  // ===== IP & アドレッシング =====
-  {
-    masterId: "M-IP-01", category: "network", subcategory: "ip", tags: ["サブネット計算", "CIDR"],
-    question: "IPアドレス 192.168.10.140、サブネットマスク 255.255.255.224 のホストが属するサブネットのブロードキャストアドレスはどれか。",
-    choices: {
-      "ア": "192.168.10.143",
-      "イ": "192.168.10.159",
-      "ウ": "192.168.10.191",
-      "エ": "192.168.10.255"
-    },
-    answer: "イ",
-    explanation: "サブネットマスク 255.255.255.224 は /27 です。第4オクテットのホスト部は5ビット、サブネットのブロックサイズは 32 です(256 - 224 = 32)。サブネットの範囲は 0-31, 32-63, 64-95, 96-127, 128-159... となります。140 が属するのは 128〜159 のサブネットであり、ネットワークアドレスは 192.168.10.128、ブロードキャストアドレスは末尾の 192.168.10.159 です。",
-    appearances: [
-      { year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 5 },
-      { year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 2 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 2 }
-    ]
-  },
-  {
-    masterId: "M-IP-02", category: "network", subcategory: "ip", tags: ["IPv6"],
-    question: "IPv6の基本ヘッダに関する記述のうち、適切なものはどれか。",
-    choices: {
-      "ア": "ヘッダ長は40バイトの固定長であり、IPv4にあったヘッダチェックサムやオプション領域が基本ヘッダから削除されている。",
-      "イ": "ヘッダ長は可変長であり、IHLフィールドでヘッダ長を指定する。",
-      "ウ": "IPv6基本ヘッダ内に暗号化ペイロード情報(ESP)が必ず含まれる。",
-      "エ": "ルータでのパケット転送を高速化するため、各ルータがホップごとに基本ヘッダのチェックサムを再計算する。"
-    },
-    answer: "ア",
-    explanation: "IPv6基本ヘッダはルータの処理効率化のため40バイト固定長になっています。IPv4ヘッダにあったチェックサム(L2やL4で十分担保されるため)やオプションは基本ヘッダから削除され、必要な機能は拡張ヘッダとして次ヘッダ(Next Header)で連鎖します。",
-    appearances: [
-      { year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 2 },
-      { year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 4 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 2 }
-    ]
-  },
-  {
-    masterId: "M-IP-03", category: "network", subcategory: "ip", tags: ["IPv6", "スコープ"],
-    question: "IPv6において、同一リンク上のノード間でのみ通信が可能な「リンクローカルアドレス」のプレフィックスはどれか。",
-    choices: {
-      "ア": "fe80::/10",
-      "イ": "fc00::/7",
-      "ウ": "ff00::/8",
-      "エ": "2001::/16"
-    },
-    answer: "ア",
-    explanation: "fe80::/10 はリンクローカルユニキャストアドレスです。fc00::/7 はユニークローカルアドレス(ULA: IPv4のプライベートIPに相当)、ff00::/8 はマルチキャストアドレス、2001:: などはグローバルユニキャストアドレスです。",
-    appearances: [
-      { year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 4 },
-      { year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 2 },
-      { year: "R3",  yearLabel: "令和3年",  yearNum: 2021, num: 1 }
-    ]
-  },
-  {
-    masterId: "M-IP-04", category: "network", subcategory: "ip", tags: ["NAT", "NAPT"],
-    question: "NAPT(Network Address Port Translation)に関する記述として、適切なものはどれか。",
-    choices: {
-      "ア": "プライベートIPアドレスとグローバルIPアドレスに加えて、TCP/UDPのポート番号も変換することで、単一のグローバルIPアドレスを多数のホストで共有可能にする。",
-      "イ": "IPアドレスの変換のみを行い、ポート番号の変換は行わないため、同時に通信可能な端末数はグローバルIPの個数に一致する。",
-      "ウ": "MACアドレスをIPアドレスに動的に割り当てる技術である。",
-      "エ": "IPsec通信を行う際、パケットのESPペイロードをポート番号を含めて透過的に変換できるため相性が良い。"
-    },
-    answer: "ア",
-    explanation: "NAPT(IPマスカレード)はIPアドレスとトランスポート層ポート番号の両方を動的に変換・マッピングすることで、1つのグローバルIPアドレスを多数の内部クライアントで共有できます。なお、IPsecではESP暗号化によりポート番号が見えなくなるため、NAT越えにはNAT-Traversal (UDP 4500)が必要です。",
-    appearances: [
-      { year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 5 },
-      { year: "H25", yearLabel: "平成25年", yearNum: 2013, num: 5 },
-      { year: "R2",  yearLabel: "令和2年",  yearNum: 2020, num: 2 },
-      { year: "R6",  yearLabel: "令和6年",  yearNum: 2024, num: 2 }
-    ]
-  },
+  // 3: SRv6 (3)
+  { masterId: "PRED-10", category: "network", subcategory: "routing", tags: ["SRv6"], question: "【令和8年度 予想】SRv6 (Segment Routing over IPv6) において、経路や処理の指示を示すセグメント識別子(SID)が格納される場所はどれか。", choices: { "ア": "IPv4オプションヘッダ", "イ": "IPv6拡張ヘッダ(Segment Routing Header: SRH)", "ウ": "MPLSラベル", "エ": "TCPオプション" }, answer: "イ", explanation: "SRv6では、IPv6の拡張ヘッダであるSRH(Segment Routing Header)にSIDのリストを格納してソースルーティングを行います。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 50 }] },
+  { masterId: "PRED-11", category: "network", subcategory: "routing", tags: ["SRv6"], question: "【令和8年度 予想】SRv6のSID(Segment Identifier)の実体は何か。", choices: { "ア": "32ビットのMPLSラベル", "イ": "48ビットのMACアドレス", "ウ": "128ビットのIPv6アドレス形式", "エ": "64ビットのVXLAN ID" }, answer: "ウ", explanation: "SRv6のSIDは128ビットであり、標準のIPv6アドレス空間と同じフォーマットを使用してネットワーク上のノードや機能を示します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 51 }] },
+  { masterId: "PRED-12", category: "network", subcategory: "routing", tags: ["SRv6"], question: "【令和8年度 予想】SRv6の「Network Programming」の概念として適切なものはどれか。", choices: { "ア": "全ルータにPythonスクリプトを展開して動作させること", "イ": "BGPの属性をプログラマブルに書き換えること", "ウ": "コントローラからOpenFlowルールを一括設定すること", "エ": "SIDに転送経路だけでなく、特定の機能(Function)を割り当てて処理させること" }, answer: "エ", explanation: "SRv6 Network Programmingでは、SIDを「Locator(ルータ位置)」と「Function(ルータ内での動作)」に分け、柔軟なサービスチェイニングを実現します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 52 }] },
 
-  // ===== TCP & UDP =====
-  {
-    masterId: "M-TCP-01", category: "network", subcategory: "tcp_udp", tags: ["TCP制御"],
-    question: "TCPのスリーウェイハンドシェイクにおいて、クライアントAとサーバBのパケット送受信シーケンスとして正しいものはどれか。",
-    choices: {
-      "ア": "A→B: SYN, B→A: SYN+ACK, A→B: ACK",
-      "イ": "A→B: SYN, B→A: ACK, A→B: SYN+ACK",
-      "ウ": "A→B: SYN+ACK, B→A: SYN, A→B: ACK",
-      "エ": "A→B: ACK, B→A: SYN+ACK, A→B: SYN"
-    },
-    answer: "ア",
-    explanation: "TCPコネクションの確立は、1. クライアントからSYN送信、2. サーバからSYN+ACK返信、3. クライアントからACK送信という3ステップ(スリーウェイハンドシェイク)で行われます。",
-    appearances: [
-      { year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 3 },
-      { year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 4 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 4 }
-    ]
-  },
-  {
-    masterId: "M-TCP-02", category: "network", subcategory: "tcp_udp", tags: ["輻輳制御"],
-    question: "TCPの輻輳制御において、コネクション開始直後やパケット損失後の回復時に、輻輳ウィンドウサイズを1から指数関数的（ACKを受信するごとに倍増）に増加させるアルゴリズムはどれか。",
-    choices: {
-      "ア": "スロースタート",
-      "イ": "輻輳回避",
-      "ウ": "高速再送",
-      "エ": "フロー制御"
-    },
-    answer: "ア",
-    explanation: "「スロースタート」は、初期の輻輳ウィンドウ(CWND)を小さく設定し、ACKを受信するたびにCWNDを指数関数的に増加させ、ネットワークの利用可能な帯域を素早く探るアルゴリズムです。閾値(ssthresh)に達した後は「輻輳回避」(線形増加)に移行します。",
-    appearances: [
-      { year: "H21", yearLabel: "平成21年", yearNum: 2009, num: 4 },
-      { year: "H26", yearLabel: "平成26年", yearNum: 2014, num: 4 },
-      { year: "R1",  yearLabel: "令和元年", yearNum: 2019, num: 4 }
-    ]
-  },
-  {
-    masterId: "M-TCP-03", category: "network", subcategory: "tcp_udp", tags: ["UDP", "ヘッダ"],
-    question: "UDPヘッダに含まれるフィールドの組み合わせとして、適切なものはどれか。",
-    choices: {
-      "ア": "送信元ポート番号、宛先ポート番号、UDP長さ、チェックサム",
-      "イ": "送信元ポート番号、宛先ポート番号、シーケンス番号、ACK番号",
-      "ウ": "送信元IPアドレス、宛先IPアドレス、UDP長さ、チェックサム",
-      "エ": "送信元ポート番号、宛先ポート番号、ウィンドウサイズ、緊急ポインタ"
-    },
-    answer: "ア",
-    explanation: "UDPヘッダはわずか8バイト固定長で、1. 送信元ポート番号(2B)、2. 宛先ポート番号(2B)、3. UDP長さ(2B)、4. チェックサム(2B) の4つのフィールドのみで構成されています。",
-    appearances: [
-      { year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 5 },
-      { year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 5 },
-      { year: "R3",  yearLabel: "令和3年",  yearNum: 2021, num: 3 }
-    ]
-  },
+  // 4: SD-WAN / SASE (4)
+  { masterId: "PRED-13", category: "network", subcategory: "sdn", tags: ["SASE"], question: "【令和8年度 予想】SASE (Secure Access Service Edge) の説明として適切なものはどれか。", choices: { "ア": "ネットワーク機能とセキュリティ機能をクラウドサービスとして統合して提供するアーキテクチャ", "イ": "企業の全データをオンプレミスの中央データセンターに集約するアーキテクチャ", "ウ": "IoTデバイスのエッジ側で機械学習を処理する技術", "エ": "無線LANのアクセスポイントをクラウドから管理するシステム" }, answer: "ア", explanation: "SASEはSD-WANなどのネットワーク機能と、SWG, CASB, ZTNAなどのセキュリティ機能を単一のクラウドアーキテクチャに統合した概念です。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 53 }] },
+  { masterId: "PRED-14", category: "network", subcategory: "sdn", tags: ["SD-WAN"], question: "【令和8年度 予想】SD-WANの「ローカルブレイクアウト (LBO)」機能の目的はどれか。", choices: { "ア": "通信を暗号化せずにデータセンターへ送信すること", "イ": "特定のクラウドサービス(SaaS)宛のトラフィックをデータセンターを経由せず各拠点から直接インターネットへ逃がすこと", "ウ": "拠点間の通信をすべて専用線に迂回させること", "エ": "ブロードキャストストームを検知して遮断すること" }, answer: "イ", explanation: "Microsoft 365などのトラフィックを各拠点から直接インターネットに流す(LBO)ことで、データセンターの帯域逼迫や遅延を防ぎます。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 54 }] },
+  { masterId: "PRED-15", category: "network", subcategory: "sdn", tags: ["SSE"], question: "【令和8年度 予想】SASEからネットワーク機能(SD-WAN等)を除き、クラウドセキュリティ機能に特化した概念を示す用語はどれか。", choices: { "ア": "ZTNA", "イ": "CASB", "ウ": "SSE (Security Service Edge)", "エ": "XDR" }, answer: "ウ", explanation: "SSEはGartnerが提唱した概念で、SASEのうちセキュリティコンポーネント(SWG, CASB, ZTNA等)のみを集約したソリューションを指します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 55 }] },
+  { masterId: "PRED-16", category: "network", subcategory: "sdn", tags: ["SD-WAN"], question: "【令和8年度 予想】SD-WANで用いられる「アプリケーション可視化・制御(DPI等)」の主なメリットはどれか。", choices: { "ア": "IPアドレスベースでしかルーティングできない制約を回避する", "イ": "マルウェアの暗号化通信を確実に復号できる", "ウ": "BGPの経路収束時間を短縮する", "エ": "アプリケーションの種類を識別し最適な回線やQoSポリシーを適用できる" }, answer: "エ", explanation: "L7レベルのアプリケーション識別により、重要通信は専用線、Web通信はインターネット回線など柔軟なトラフィック制御(ステアリング)が可能です。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 56 }] },
 
-  // ===== DNS =====
-  {
-    masterId: "M-DNS-01", category: "network", subcategory: "dns", tags: ["DNSレコード"],
-    question: "DNSのリソースレコードのうち、ドメイン宛ての電子メールを配送すべきメールサーバ（MTA）のホスト名を指定するレコードはどれか。",
-    choices: {
-      "ア": "Aレコード",
-      "イ": "CNAMEレコード",
-      "ウ": "MXレコード",
-      "エ": "PTRレコード"
-    },
-    answer: "ウ",
-    explanation: "MX (Mail eXchanger) レコードは、ドメイン宛てメールの配送先サーバホスト名と優先順位(Preference)を定義します。AはIPv4アドレス、CNAMEは別名、PTRは逆引き(IP→FQDN)です。",
-    appearances: [
-      { year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 1 },
-      { year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 5 },
-      { year: "R3",  yearLabel: "令和3年",  yearNum: 2021, num: 5 }
-    ]
-  },
-  {
-    masterId: "M-DNS-02", category: "network", subcategory: "dns", tags: ["DNSSEC"],
-    question: "DNSSEC (DNS Security Extensions) が提供するセキュリティ機能として、適切なものはどれか。",
-    choices: {
-      "ア": "公開鍵暗号とデジタル署名を用いて、DNS応答データが改ざんされていないこと(完全性)と正当な権威サーバからのものであること(真正性)を検証可能にする。",
-      "イ": "DNSクライアントとフルリゾルバ間の通信全体を共通鍵暗号方式で暗号化して盗聴を防ぐ。",
-      "ウ": "権威DNSサーバへのDDoS攻撃を検知し、自動的に不要なパケットを遮断する。",
-      "エ": "ゾーン転送時にTLSハンドシェイクを用いて通信相手のサーバ証明書を検証する。"
-    },
-    answer: "ア",
-    explanation: "DNSSECは、DNSゾーンのレコードにデジタル署名(RRSIG)を付加し、DNSKEYや上位ゾーンのDSレコードと信頼の連鎖を形成することで、キャッシュサーバ側で応答データの偽造や改ざん(キャッシュポイズニング)を検知・防御する技術です。通信の暗号化(盗聴防止)を行うのはDoH/DoTです。",
-    appearances: [
-      { year: "H25", yearLabel: "平成25年", yearNum: 2013, num: 1 },
-      { year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 6 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 5 }
-    ]
-  },
-  {
-    masterId: "M-DNS-03", category: "network", subcategory: "dns", tags: ["キャッシュポイズニング"],
-    question: "DNSキャッシュポイズニング攻撃（カミンスキーアタック等）に対する防御策として、最も効果的なものはどれか。",
-    choices: {
-      "ア": "フルサービスリゾルバが外部DNSサーバへ問い合わせを行う際の「送信元ポート番号」をランダム化(ソースポートランダマイゼーション)する。",
-      "イ": "DNSサーバのIPアドレスを動的に変更する。",
-      "ウ": "キャッシュの有効期間(TTL)をできるだけ長く設定して問い合わせ頻度を下げる。",
-      "エ": "再帰的問い合わせをインターネット全体から無制限に受け付けるようオープンリゾルバ化する。"
-    },
-    answer: "ア",
-    explanation: "DNSキャッシュポイズニングは偽のDNS応答を本物より先に送り込んでキャッシュを汚染する攻撃です。攻撃者が正解パケットを偽造するにはトランザクションID(16bit)と送信元ポート(16bit)を推測する必要があるため、ポート番号をランダム化(ソースポートランダマイゼーション)することで推測難易度を跳ね上げることができます。",
-    appearances: [
-      { year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 1 },
-      { year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 3 },
-      { year: "R2",  yearLabel: "令和2年",  yearNum: 2020, num: 3 }
-    ]
-  },
+  // 5: Intent-Based Networking (2)
+  { masterId: "PRED-17", category: "network", subcategory: "sdn", tags: ["IBN"], question: "【令和8年度 予想】インテントベースネットワーキング(IBN)の特徴はどれか。", choices: { "ア": "管理者が「どのポートのVLANを変更するか」といった具体的手順(How)ではなく、「何を達成したいか(What/Intent)」を定義する", "イ": "すべてのルーティングを静的(Static)に設定する", "ウ": "BGPのポリシーを手動で細かくチューニングする", "エ": "AIを使用せずにスクリプトだけで自動化する" }, answer: "ア", explanation: "IBNは、管理者のビジネス意図(インテント)を入力とし、システムが自動的に機器の設定(How)へ変換・適用し、状態を継続的に監視・検証します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 57 }] },
+  { masterId: "PRED-18", category: "network", subcategory: "sdn", tags: ["IBN"], question: "【令和8年度 予想】IBNのライフサイクルにおいて、設定後に行われる重要なプロセスはどれか。", choices: { "ア": "システムのシャットダウン", "イ": "継続的な検証・保証 (Assurance)", "ウ": "手動でのCLI設定確認", "エ": "MACアドレスの初期化" }, answer: "イ", explanation: "IBNでは、意図した状態(Intent)と実際のネットワーク状態が一致しているかを継続的に監視・保証(アシュアランス)するループが重要です。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 58 }] },
 
-  // ===== HTTP & WEB =====
-  {
-    masterId: "M-HTTP-01", category: "network", subcategory: "http", tags: ["HTTP/2"],
-    question: "HTTP/2に関する記述として、適切なものはどれか。",
-    choices: {
-      "ア": "単一のTCPコネクション上で複数のリクエストとレスポンスをバイナリフレームとして多重化(マルチプレキシング)できる。",
-      "イ": "トランスポート層プロトコルとしてUDPを使用し、暗号化が必須化されている。",
-      "ウ": "テキストベースのプロトコルであり、CookieやHTTPヘッダは一切圧縮されない。",
-      "エ": "セッション確立ごとに毎回個別のTCPコネクションを開放・再接続する。"
-    },
-    answer: "ア",
-    explanation: "HTTP/2は1つのTCPコネクション上で複数のストリームを多重化し、パイプライニングの課題(Head-of-Line Blocking)を解決しました。またバイナリフレーム化とHPACKによるヘッダ圧縮を備えています。UDPを使用するのはHTTP/3です。",
-    appearances: [
-      { year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 6 },
-      { year: "R2",  yearLabel: "令和2年",  yearNum: 2020, num: 5 },
-      { year: "R6",  yearLabel: "令和6年",  yearNum: 2024, num: 3 }
-    ]
-  },
-  {
-    masterId: "M-HTTP-02", category: "network", subcategory: "http", tags: ["Cookie", "セキュリティ"],
-    question: "Webアプリケーションにおいて、セッションIDを保持するCookieに設定すべき属性とその効果の組み合わせとして、適切なものはどれか。",
-    choices: {
-      "ア": "HttpOnly属性を指定すると、ブラウザ上のJavaScript(XSS等)から該当Cookieへのアクセスを遮断できる。",
-      "イ": "Secure属性を指定すると、HTTPとHTTPSの両方の通信でCookieが暗号化されて送信される。",
-      "ウ": "SameSite属性にStrictを指定すると、同一IPアドレスからのアクセスのみCookieが許可される。",
-      "エ": "Domain属性に自ドメインの上位TLD(.jpなど)を指定すると全サブドメインで安全に共有できる。"
-    },
-    answer: "ア",
-    explanation: "HttpOnly属性は、document.cookieなどのJavaScriptからのアクセスを禁止し、XSS攻撃によるセッションID奪取を防止します。Secure属性はHTTPS通信時のみ送信を許可する属性です。SameSiteはクロスサイトリクエスト時の送信制限(CSRF対策)です。",
-    appearances: [
-      { year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 6 },
-      { year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 6 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 5 }
-    ]
-  },
+  // 6: IPv6 latest (3)
+  { masterId: "PRED-19", category: "network", subcategory: "ip", tags: ["IPv6"], question: "【令和8年度 予想】IPv4 over IPv6技術（MAP-EやDS-Lite）が解決する主な課題はどれか。", choices: { "ア": "IPv6の経路表サイズ肥大化", "イ": "IPv6ヘッダのサイズが大きすぎること", "ウ": "IPv4アドレスの枯渇とIPv6網を介したIPv4通信", "エ": "IPv6の暗号化機能の不足" }, answer: "ウ", explanation: "MAP-EやDS-Liteは、通信事業者のIPv6網をトンネル等で通過し、枯渇するIPv4アドレスを共有(CGNAT)してIPv4通信を提供します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 59 }] },
+  { masterId: "PRED-20", category: "network", subcategory: "ip", tags: ["IPv6", "MAP-E"], question: "【令和8年度 予想】MAP-E (Mapping of Address and Port with Encapsulation) の特徴はどれか。", choices: { "ア": "NAPT(アドレス・ポート変換)処理を通信事業者の機器(CGNAT)で行う", "イ": "IPv4パケットをIPv6にカプセル化せず直接送信する", "ウ": "IPsecによる暗号化が必須である", "エ": "NAPT処理を各ユーザーのホームゲートウェイ(CPE)で行い、ポート番号を分割して割り当てる" }, answer: "エ", explanation: "MAP-Eはステートレスな方式であり、ユーザ宅のルータ(CPE)でNAPTを行い、割り当てられたポートブロックを用いて通信をIPv6カプセル化します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 60 }] },
+  { masterId: "PRED-21", category: "network", subcategory: "ip", tags: ["IPv6", "SLAAC"], question: "【令和8年度 予想】IPv6のSLAAC(ステートレスアドレス自動設定)において、プライバシー保護のために行われる工夫はどれか。", choices: { "ア": "ランダム生成したインターフェースIDを定期的に変更する(プライバシー拡張)", "イ": "MACアドレスに基づく固定のインターフェースIDを常に使用する", "ウ": "DHCPv6サーバにアクセスログを保存する", "エ": "RA(ルータ広告)の送信を停止する" }, answer: "ア", explanation: "EUI-64による固定のインターフェースIDは端末の追跡に悪用される恐れがあるため、RFC 4941等でランダムな値を一時アドレスとして使用します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 61 }] },
 
-  // ===== 電子メール =====
-  {
-    masterId: "M-MAIL-01", category: "network", subcategory: "email", tags: ["送信ドメイン認証", "DKIM"],
-    question: "電子メールの送信ドメイン認証技術であるDKIM(DomainKeys Identified Mail)の動作原理として、適切なものはどれか。",
-    choices: {
-      "ア": "送信側メールサーバがメールヘッダや本文に秘密鍵でデジタル署名を付加し、受信側が送信元ドメインのDNSから公開鍵を取得して署名を検証する。",
-      "イ": "受信側メールサーバが、送信元IPアドレスと送信元ドメインのDNS TXTレコード(SPF)に記載された許可IPを照合する。",
-      "ウ": "認証に失敗したメールの処置(none, quarantine, reject)を送信元管理者が宣言し、認証結果のレポートを受信する。",
-      "エ": "送信側SMTPサーバと受信側SMTPサーバ間の通信経路をTLSで暗号化する。"
-    },
-    answer: "ア",
-    explanation: "DKIMはメールに電子署名を付与し、受信側が送信ドメインのDNSから取得した公開鍵で検証することで、なりすましとメール改ざんを検知します。イはSPF、ウはDMARC、エはSTARTTLSの説明です。",
-    appearances: [
-      { year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 3 },
-      { year: "H30", yearLabel: "平成30年", yearNum: 2018, num: 4 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 6 }
-    ]
-  },
-  {
-    masterId: "M-MAIL-02", category: "network", subcategory: "email", tags: ["IMAP", "POP3"],
-    question: "メール受信プロトコルであるIMAP4の特徴として、POP3と比較した記述のうち適切なものはどれか。",
-    choices: {
-      "ア": "メールボックスをサーバ上で管理するため、複数の端末から未読・既読状態やフォルダ構成を同期して利用できる。",
-      "イ": "メール受信時に必ずすべてのメッセージ本文をローカル端末にダウンロードしてサーバから消去する。",
-      "ウ": "通信経路上での認証データや本文の暗号化機能が標準で必須化されている。",
-      "エ": "クライアントからメールを外部へ送信・中継するためのプロトコルである。"
-    },
-    answer: "ア",
-    explanation: "IMAP4はメールをサーバ上で一元管理するため、PCやスマートフォンなど複数端末間で未読・既読・フラグ・フォルダの同期が容易です。本文をダウンロードせずヘッダのみを取得することも可能です。イはPOP3の典型的な動作です。",
-    appearances: [
-      { year: "H21", yearLabel: "平成21年", yearNum: 2009, num: 5 },
-      { year: "H26", yearLabel: "平成26年", yearNum: 2014, num: 5 },
-      { year: "R2",  yearLabel: "令和2年",  yearNum: 2020, num: 1 }
-    ]
-  },
+  // 7: Network Slicing / 5G (3)
+  { masterId: "PRED-22", category: "network", subcategory: "sdn", tags: ["5G", "Slicing"], question: "【令和8年度 予想】5Gにおけるネットワークスライシングの主な目的はどれか。", choices: { "ア": "パケットを小さく分割して伝送遅延を減らす", "イ": "物理網を論理的に分割し、用途に応じたSLAを提供する", "ウ": "IPv4アドレス空間をより細かくサブネット化する", "エ": "周波数帯域を時分割してユーザーに割り当てる" }, answer: "イ", explanation: "ネットワークスライシングにより、eMBB(高速大容量)、URLLC(超信頼・低遅延)、mMTC(多数同時接続)といった要件の異なる仮想網を同一基盤上に展開します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 62 }] },
+  { masterId: "PRED-23", category: "network", subcategory: "sdn", tags: ["5G", "UPF"], question: "【令和8年度 予想】5Gコアネットワーク(5GC)のアーキテクチャ(SBA)において、ユーザーデータの転送処理を担う機能(NFs)はどれか。", choices: { "ア": "AMF (Access and Mobility Management Function)", "イ": "SMF (Session Management Function)", "ウ": "UPF (User Plane Function)", "エ": "UDM (Unified Data Management)" }, answer: "ウ", explanation: "コントロールプレーン(C-Plane: AMF/SMF等)とユーザープレーン(U-Plane)の分離(CUPS)により、データ転送はUPFが担い、エッジへの分散配置が容易になります。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 63 }] },
+  { masterId: "PRED-24", category: "network", subcategory: "sdn", tags: ["5G", "MEC"], question: "【令和8年度 予想】5Gネットワークにおいて、超低遅延を実現するためにアプリケーションサーバをユーザーの近く(基地局や収容局など)に配置する技術はどれか。", choices: { "ア": "CDN", "イ": "VLAN", "ウ": "NAT", "エ": "MEC (Multi-access Edge Computing)" }, answer: "エ", explanation: "MECはモバイル網のエッジでデータ処理を行うことで、クラウドまでの往復遅延を削減し、自動運転やAR/VRなどの超低遅延要件を満たします。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 64 }] },
 
-  // ===== セキュリティ =====
-  {
-    masterId: "M-SEC-01", category: "security", subcategory: "security", tags: ["IPsec"],
-    question: "IPsecにおいて、パケットの暗号化による機密性および改ざん検知による完全性を同時に提供するプロトコルはどれか。",
-    choices: {
-      "ア": "AH (Authentication Header)",
-      "イ": "ESP (Encapsulating Security Payload)",
-      "ウ": "IKE (Internet Key Exchange)",
-      "エ": "L2TP (Layer 2 Tunneling Protocol)"
-    },
-    answer: "イ",
-    explanation: "ESPはデータの暗号化(機密性)と認証・改ざん検知(完全性)の両方を提供します。AHは認証と完全性のみを提供し、暗号化は行いません。IKEは共通鍵やセキュリティアソシエーション(SA)の自動交換プロトコルです。",
-    appearances: [
-      { year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 6 },
-      { year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 7 },
-      { year: "R3",  yearLabel: "令和3年",  yearNum: 2021, num: 6 }
-    ]
-  },
-  {
-    masterId: "M-SEC-02", category: "security", subcategory: "security", tags: ["TLS 1.3"],
-    question: "TLS 1.3における主な変更点および特徴として、適切なものはどれか。",
-    choices: {
-      "ア": "ハンドシェイクが最適化され、初回接続が1-RTTで完了し、さらに再接続時には0-RTT (Early Data) による通信開始が可能になった。",
-      "イ": "後方互換性のため、RC4、3DES、静的RSA鍵交換などのレガシー暗号スイートが標準で保持されている。",
-      "ウ": "共通鍵暗号としてCBCモードのみが採用され、GCMやCCMなどのAEAD暗号は廃止された。",
-      "エ": "通信データの完全性検証を行わず、暗号化のみを行うことで高速化を図っている。"
-    },
-    answer: "ア",
-    explanation: "TLS 1.3ではハンドシェイクが2-RTTから1-RTTへ短縮され、0-RTTモードも導入されました。また、前方秘匿性(PFS)を持たない静的RSA鍵交換や脆弱な暗号(RC4, 3DES, CBCモード)が全廃され、認証付き暗号(AEAD)のみが許可されています。",
-    appearances: [
-      { year: "R2",  yearLabel: "令和2年",  yearNum: 2020, num: 6 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 7 },
-      { year: "R6",  yearLabel: "令和6年",  yearNum: 2024, num: 4 }
-    ]
-  },
-  {
-    masterId: "M-SEC-03", category: "security", subcategory: "security", tags: ["IEEE 802.1X", "RADIUS"],
-    question: "IEEE 802.1X認証システムを構成する3つのエンティティとして、正しい組み合わせはどれか。",
-    choices: {
-      "ア": "サプリカント (端末)、オーセンティケータ (スイッチ/AP)、認証サーバ (RADIUS等)",
-      "イ": "クライアント、CA(認証局)、DNSサーバ",
-      "ウ": "プロキシサーバ、マスターブラウザ、LDAPサーバ",
-      "エ": "KDC(鍵配布センタ)、チケットサーバ、クライアント"
-    },
-    answer: "ア",
-    explanation: "IEEE 802.1X認証は、1. サプリカント(クライアント端末)、2. オーセンティケータ(認証スイッチや無線アクセスポイント)、3. 認証サーバ(RADIUSサーバ)の3要素で構成されます。",
-    appearances: [
-      { year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 6 },
-      { year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 7 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 6 }
-    ]
-  },
+  // 8: DoH / DoT (2)
+  { masterId: "PRED-25", category: "network", subcategory: "dns", tags: ["DoH"], question: "【令和8年度 予想】DoH (DNS over HTTPS) の特徴として適切なものはどれか。", choices: { "ア": "DNSクエリをHTTPのペイロードに格納し、TLSで暗号化してポート443で通信する", "イ": "DNSクエリをTCPポート853を使用して暗号化通信する", "ウ": "DNSクエリをIPsecでカプセル化する", "エ": "DNSサーバのIPアドレスを自動検出する" }, answer: "ア", explanation: "DoHはHTTPSプロトコル(ポート443)にDNSクエリを紛れ込ませるため、暗号化されるだけでなく通常のWebトラフィックと区別がつきにくく、検閲を回避しやすい特徴があります。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 65 }] },
+  { masterId: "PRED-26", category: "network", subcategory: "dns", tags: ["DoT"], question: "【令和8年度 予想】DoT (DNS over TLS) で使用される標準的なTCPポート番号はどれか。", choices: { "ア": "TCP 53", "イ": "TCP 853", "ウ": "TCP 443", "エ": "UDP 53" }, answer: "イ", explanation: "DoTはDNSプロトコル自体を直接TLSで暗号化する仕組みであり、専用のTCPポート853を使用します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 66 }] },
 
-  // ===== 無線LAN =====
-  {
-    masterId: "M-WLAN-01", category: "network", subcategory: "wireless", tags: ["WPA2", "WPA3"],
-    question: "無線LANのセキュリティ規格WPA3-Personalにおいて、従来のWPA2-PSKで脆弱であった事前共有鍵に対する総当たり攻撃や辞書攻撃を防ぐために導入された鍵交換プロトコルはどれか。",
-    choices: {
-      "ア": "SAE (Simultaneous Authentication of Equals)",
-      "イ": "WEP (Wired Equivalent Privacy)",
-      "ウ": "TKIP (Temporal Key Integrity Protocol)",
-      "エ": "WPS (Wi-Fi Protected Setup)"
-    },
-    answer: "ア",
-    explanation: "WPA3-Personalでは、ディフィー・ヘルマン鍵共有をベースにしたSAE(Simultaneous Authentication of Equals: 同等性同時認証)が導入されました。これにより、パスワードが単純であってもオフライン辞書攻撃を受けず、前方秘匿性が確保されます。",
-    appearances: [
-      { year: "R1",  yearLabel: "令和元年", yearNum: 2019, num: 5 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 7 },
-      { year: "R6",  yearLabel: "令和6年",  yearNum: 2024, num: 5 }
-    ]
-  },
-  {
-    masterId: "M-WLAN-02", category: "network", subcategory: "wireless", tags: ["IEEE 802.11ax", "Wi-Fi 6"],
-    question: "Wi-Fi 6 (IEEE 802.11ax) で採用され、通信帯域を複数のサブキャリア（リソースユニット）に分割して複数端末と同時に送受信を行う技術はどれか。",
-    choices: {
-      "ア": "OFDMA (直交周波数分割多元接続)",
-      "イ": "CSMA/CD (搬送波感知多重アクセス/衝突検出)",
-      "ウ": "チャネルボンディング",
-      "エ": "DSSS (直接拡散スペクトラム拡散)"
-    },
-    answer: "ア",
-    explanation: "Wi-Fi 6で導入されたOFDMA(Orthogonal Frequency Division Multiple Access)は、1つの通信チャネルを微小な周波数ブロック(リソースユニット)に細分化し、複数の端末宛ての通信を同時に相乗りさせることで、混雑環境での遅延とスループットを大幅に改善します。",
-    appearances: [
-      { year: "R3",  yearLabel: "令和3年",  yearNum: 2021, num: 7 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 8 }
-    ]
-  },
+  // 9: MPLS/EVPN (2)
+  { masterId: "PRED-27", category: "network", subcategory: "routing", tags: ["EVPN"], question: "【令和8年度 予想】BGP EVPN (Ethernet VPN) の利点として適切なものはどれか。", choices: { "ア": "OSPFを拡張してマルチキャスト配信を行う", "イ": "MACアドレス学習をデータプレーンでのみ行う", "ウ": "BGPを用いてMAC/IPアドレスの学習をコントロールプレーンで行う", "エ": "VLAN IDの制約を取り除きIPv4空間を拡張する" }, answer: "ウ", explanation: "従来のVPLSではデータプレーンでのフラッディングによるMAC学習でしたが、EVPNはBGP(MP-BGP)でMAC経路を広報し、ARPトラフィックを削減します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 67 }] },
+  { masterId: "PRED-28", category: "network", subcategory: "routing", tags: ["VXLAN", "EVPN"], question: "【令和8年度 予想】データセンターネットワーク(Spine-Leaf構成)において、VXLANのコントロールプレーンとして広く採用されているプロトコルはどれか。", choices: { "ア": "RIPv2", "イ": "IGMP", "ウ": "STP", "エ": "BGP EVPN" }, answer: "エ", explanation: "VXLAN単体ではマルチキャストでMAC学習を行う課題がありますが、BGP EVPNを組み合わせることでスケーラブルなレイヤ2/3オーバーレイネットワークを構築できます。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 68 }] },
 
-  // ===== 高可用性 & QOS =====
-  {
-    masterId: "M-QOS-01", category: "network", subcategory: "qos", tags: ["VRRP"],
-    question: "VRRP(Virtual Router Redundancy Protocol, RFC 5798)において、マスタールータの障害発生をバックアップルータが検知するメカニズムとして適切なものはどれか。",
-    choices: {
-      "ア": "マスタールータからマルチキャストで定期送信されるVRRPアドバタイズメントパケットが一定期間途絶える。",
-      "イ": "バックアップルータからマスタールータへのICMP Echo応答が途絶える。",
-      "ウ": "デフォルトゲートウェイのMACアドレスに対するARP要求に無応答になる。",
-      "エ": "OSPFなどのダイナミックルーティングのネイバー関係が切断される。"
-    },
-    answer: "ア",
-    explanation: "VRRPではマスタールータが一定間隔(デフォルト1秒)でVRRPアドバタイズメントをマルチキャスト(224.0.0.18)送信します。バックアップルータが3回分など一定期間受信しなかった場合、マスターのダウンと判定して昇格処理を行います。",
-    appearances: [
-      { year: "H22", yearLabel: "平成22年", yearNum: 2010, num: 7 },
-      { year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 7 },
-      { year: "R2",  yearLabel: "令和2年",  yearNum: 2020, num: 7 }
-    ]
-  },
-  {
-    masterId: "M-QOS-02", category: "network", subcategory: "qos", tags: ["QoS", "DiffServ"],
-    question: "IPネットワークのQoS制御方式であるDiffServ(Differentiated Services)の説明として、適切なものはどれか。",
-    choices: {
-      "ア": "IPパケットのDSCP(DiffServ Code Point)フィールドの値に基づき、各ルータが事前に定義された優先度(PHB)に従ってパケットを振り分けて転送する。",
-      "イ": "通信に先立ち、RSVPプロトコルを用いてエンドツーエンドの通信経路上の全ルータで帯域を事前予約する。",
-      "ウ": "パケットのTCPポート番号のみを監視して、Webトラフィックのみを無制限に優先する。",
-      "エ": "送信元ホストが自身の回線利用率に応じて送信パケットに動的に暗号化タグを付与する。"
-    },
-    answer: "ア",
-    explanation: "DiffServは、IPヘッダ内のToS/トラフィッククラスフィールドの6ビット(DSCP)を用いてパケットをクラス分けし、各ルータがそのクラスに応じた振る舞い(PHB: Per-Hop Behavior)で優先制御・帯域制御を行うスケーラブルなQoS方式です。イはIntServ/RSVPの説明です。",
-    appearances: [
-      { year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 7 },
-      { year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 8 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 8 }
-    ]
-  },
+  // 10: API GW / Microservices (2)
+  { masterId: "PRED-29", category: "network", subcategory: "http", tags: ["API Gateway"], question: "【令和8年度 予想】マイクロサービスアーキテクチャにおいて、APIゲートウェイの主な役割はどれか。", choices: { "ア": "クライアントからのリクエストをルーティングし認証等を行う", "イ": "すべてのデータベースを1つに統合する", "ウ": "OSのカーネルレベルでパケットをフィルタリングする", "エ": "IPsec VPNトンネルの終端となる" }, answer: "ア", explanation: "APIゲートウェイはシステムへの単一エントリポイントとして機能し、ルーティング、認証認可、負荷分散、API集約などを担います。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 69 }] },
+  { masterId: "PRED-30", category: "network", subcategory: "http", tags: ["REST API"], question: "【令和8年度 予想】RESTful APIにおける、データの更新を示す適切なHTTPメソッドはどれか。", choices: { "ア": "GET", "イ": "PUT", "ウ": "DELETE", "エ": "OPTIONS" }, answer: "イ", explanation: "RESTの原則において、PUT(またはPATCH)はリソースの更新(または置換)に用いられます。(作成はPOST、取得はGET、削除はDELETE)", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 70 }] },
 
-  // ===== SDN & 仮想化 =====
-  {
-    masterId: "M-SDN-01", category: "network", subcategory: "sdn", tags: ["OpenFlow", "SDN"],
-    question: "OpenFlowにおいて、スイッチがパケットを受信した際に転送先や処理方法を決定するために参照するテーブルはどれか。",
-    choices: {
-      "ア": "フローテーブル",
-      "イ": "FIB (Forwarding Information Base)",
-      "ウ": "ARPキャッシュテーブル",
-      "エ": "CAMテーブル"
-    },
-    answer: "ア",
-    explanation: "OpenFlowスイッチは「フローテーブル」を保持し、コントローラから注入されたフローエントリ（マッチ条件、カウンタ、アクション）に基づいてパケットの転送、書き換え、破棄などを実行します。",
-    appearances: [
-      { year: "H26", yearLabel: "平成26年", yearNum: 2014, num: 6 },
-      { year: "H30", yearLabel: "平成30年", yearNum: 2018, num: 5 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 9 }
-    ]
-  },
-  {
-    masterId: "M-SDN-02", category: "network", subcategory: "sdn", tags: ["VXLAN"],
-    question: "データセンターなどのネットワーク仮想化で用いられるVXLAN (Virtual eXtensible Local Area Network) の特徴として、適切なものはどれか。",
-    choices: {
-      "ア": "イーサネットフレームをUDPパケットでカプセル化し、24ビットのVNI(VXLAN Network Identifier)により約1600万個の論理ネットワークを識別できる。",
-      "イ": "IEEE 802.1Qタグを2重に重ねることで4096×4096個のVLANを作成するL2技術である。",
-      "ウ": "MPLSヘッダをIPパケットの末尾に追加してハードウェアスイッチのみで高速中継する。",
-      "エ": "TCPセッションを暗号化してトンネリングするためのSSL-VPN技術の一種である。"
-    },
-    answer: "ア",
-    explanation: "VXLAN(RFC 7348)はL2 over L3トンネリング技術で、EthernetフレームをUDP(宛先ポート4789)でカプセル化します。24bitのVNIにより、VLANの上限(4094個)を大きく超える最大約1677万個の論理セグメントを構築できます。",
-    appearances: [
-      { year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 8 },
-      { year: "R1",  yearLabel: "令和元年", yearNum: 2019, num: 6 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 9 }
-    ]
-  },
+  // 11: Zero Trust / ZTNA (4)
+  { masterId: "PRED-31", category: "security", subcategory: "security", tags: ["Zero Trust"], question: "【令和8年度 予想】ゼロトラストネットワークアーキテクチャ(ZTNA)の基本原則として適切なものはどれか。", choices: { "ア": "社内ネットワークに接続されたデバイスは無条件で信頼する", "イ": "一度認証を通過したセッションは永続的に信頼する", "ウ": "すべてのアクセス要求を、ネットワークの場所に関わらず、毎度検証し最小権限で許可する", "エ": "境界防御のファイアウォールさえ強固なら内部対策は不要とする" }, answer: "ウ", explanation: "ゼロトラストは「何も信頼しない(Never Trust, Always Verify)」を前提とし、アクセス毎にユーザー、デバイスの状態などを動的に検証します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 71 }] },
+  { masterId: "PRED-32", category: "security", subcategory: "security", tags: ["ZTNA", "VPN"], question: "【令和8年度 予想】従来型のリモートアクセスVPNと比較したZTNAの利点はどれか。", choices: { "ア": "暗号化が不要なため通信速度が劇的に向上する", "イ": "専用のハードウェアアプライアンスが社内に必須となる", "ウ": "静的なパスワード認証のみで運用できる", "エ": "ネットワーク全体ではなく特定のアプリケーション単位でアクセスを制御できる" }, answer: "エ", explanation: "VPNは一度接続すると社内LAN全体(または広いサブネット)にアクセス可能になりがちですが、ZTNAはアプリケーション単位のマイクロセグメンテーションを実現します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 72 }] },
+  { masterId: "PRED-33", category: "security", subcategory: "security", tags: ["Zero Trust", "IAM"], question: "【令和8年度 予想】ゼロトラストにおけるアクセス認可判断を下す中心的なコンポーネント(NIST SP 800-207定義)はどれか。", choices: { "ア": "ポリシー決定ポイント (PDP)", "イ": "ポリシー実施ポイント (PEP)", "ウ": "Active Directory", "エ": "スイッチのMACアドレステーブル" }, answer: "ア", explanation: "PDP(Policy Decision Point)がリスクベースのポリシー評価とアクセス判断を行い、PEP(Policy Enforcement Point)が実際の通信許可/遮断を実施します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 73 }] },
+  { masterId: "PRED-34", category: "security", subcategory: "security", tags: ["Zero Trust"], question: "【令和8年度 予想】ゼロトラストアーキテクチャのアイデンティティ管理において推奨される認証強化策はどれか。", choices: { "ア": "パスワードの複雑性を極限まで高め、定期変更を義務付ける", "イ": "MFA(多要素認証)とデバイスポスチャ(セキュリティ状態)のチェックを組み合わせる", "ウ": "送信元IPアドレスのみで認証を完了させる", "エ": "SSO(シングルサインオン)を無効化する" }, answer: "イ", explanation: "強力なパスワードより、FIDO2などのMFAや、OSパッチ適用状況等のデバイス状態(ポスチャ)を動的にチェックするコンテキストベース認証が推奨されます。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 74 }] },
 
-  // ===== ネットワーク管理 =====
-  {
-    masterId: "M-MGMT-01", category: "network", subcategory: "management", tags: ["SNMPv3"],
-    question: "SNMPv3で導入され、SNMPv1やSNMPv2cと比較して最も大きく強化された機能はどれか。",
-    choices: {
-      "ア": "USM (User-based Security Model) によるユーザ認証と通信メッセージの暗号化",
-      "イ": "マネージャからエージェントへのTrapパケット送信機能",
-      "ウ": "TCPポート161番を使用したストリーム通信サポート",
-      "エ": "MIB定義をXML形式で記述するスキーマ機能"
-    },
-    answer: "ア",
-    explanation: "SNMPv1/v2cでは平文のコミュニティ名による簡易認証しかありませんでしたが、SNMPv3ではUSMによるユーザ認証(HMAC-MD5/SHA)と暗号化(DES/AES)が実装され、安全なネットワーク監視が可能になりました。",
-    appearances: [
-      { year: "H24", yearLabel: "平成24年", yearNum: 2012, num: 8 },
-      { year: "H29", yearLabel: "平成29年", yearNum: 2017, num: 9 },
-      { year: "R5",  yearLabel: "令和5年",  yearNum: 2023, num: 10 }
-    ]
-  },
-  {
-    masterId: "M-MGMT-02", category: "network", subcategory: "management", tags: ["syslog"],
-    question: "syslogプロトコル(RFC 5424)において、メッセージの重大度を表すSeverity（セビリティ）の値として、最も重要度・緊急度が高いものはどれか。",
-    choices: {
-      "ア": "0 (Emergency: システムが使用不能)",
-      "イ": "1 (Alert: 直ちに対処が必要)",
-      "ウ": "4 (Warning: 警告)",
-      "エ": "7 (Debug: デバッグレベル)"
-    },
-    answer: "ア",
-    explanation: "syslogのSeverityは 0〜7 で定義され、数値が小さいほど緊急度が高くなります。0はEmergency(システム使用不可)、7はDebugです。",
-    appearances: [
-      { year: "H25", yearLabel: "平成25年", yearNum: 2013, num: 6 },
-      { year: "H30", yearLabel: "平成30年", yearNum: 2018, num: 6 },
-      { year: "R3",  yearLabel: "令和3年",  yearNum: 2021, num: 8 }
-    ]
-  },
-  {
-    masterId: "M-MGMT-03", category: "network", subcategory: "management", tags: ["NTP"],
-    question: "NTP (Network Time Protocol) において、時計の階層構造（信頼度）を表す用語はどれか。",
-    choices: {
-      "ア": "Stratum (ストラタム)",
-      "イ": "Metric (メトリック)",
-      "ウ": "Hop Count (ホップカウント)",
-      "エ": "Jitter (ジッター)"
-    },
-    answer: "ア",
-    explanation: "NTPでは時間の正確度・階層を「Stratum(ストラタム)」で表します。原子時計やGPSに直結した最上位サーバがStratum 1、それから時刻同期するサーバがStratum 2、と順に数値が大きくなります(最大15)。",
-    appearances: [
-      { year: "H23", yearLabel: "平成23年", yearNum: 2011, num: 7 },
-      { year: "H28", yearLabel: "平成28年", yearNum: 2016, num: 9 },
-      { year: "R4",  yearLabel: "令和4年",  yearNum: 2022, num: 10 }
-    ]
-  },
+  // 12: RPKI (2)
+  { masterId: "PRED-35", category: "security", subcategory: "security", tags: ["RPKI"], question: "【令和8年度 予想】RPKI (Resource Public Key Infrastructure) の主な目的はどれか。", choices: { "ア": "HTTPSのサーバ証明書を管理する", "イ": "DNSSECのリソースレコードを署名する", "ウ": "BGPの経路ハイジャックを防ぐためIPプレフィックスの正当性を証明する", "エ": "IPsecの鍵交換を自動化する" }, answer: "ウ", explanation: "RPKIはIPアドレスリソースの割り当てを電子証明書で証明し(ROA)、ルータが経路情報のオリジンASの妥当性を検証(Origin Validation)できるようにします。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 75 }] },
+  { masterId: "PRED-36", category: "security", subcategory: "security", tags: ["RPKI", "ROA"], question: "【令和8年度 予想】RPKIにおいて、あるIPプレフィックスを広報する権限を持つAS番号を定義した署名付きオブジェクトはどれか。", choices: { "ア": "CSR", "イ": "CRL", "ウ": "AS-PATH", "エ": "ROA (Route Origin Authorization)" }, answer: "エ", explanation: "ROA(Route Origin Authorization)には、IPプレフィックス、最大プレフィックス長、およびそれを広報する正当なAS番号が記述され、電子署名が付与されます。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 76 }] },
 
-  // ===== システム & 信頼性 =====
-  {
-    masterId: "M-SYS-01", category: "other", subcategory: "other", tags: ["信頼性計算"],
-    question: "稼働率がRの装置2台を並列に接続し、どちらか一方でも稼働していればシステム全体が稼働する並列システムの稼働率を表す式はどれか。",
-    choices: {
-      "ア": "1 - (1 - R)^2",
-      "イ": "R^2",
-      "ウ": "2R - R^2",
-      "エ": "アとウの両方"
-    },
-    answer: "エ",
-    explanation: "並列システムの稼働率は「1 - 両方停止する確率」なので 1 - (1 - R)^2 です。これを展開すると 1 - (1 - 2R + R^2) = 2R - R^2 となり、式としてアとウは同値です。",
-    appearances: [
-      { year: "H21", yearLabel: "平成21年", yearNum: 2009, num: 6 },
-      { year: "H27", yearLabel: "平成27年", yearNum: 2015, num: 8 },
-      { year: "R2",  yearLabel: "令和2年",  yearNum: 2020, num: 8 },
-      { year: "R6",  yearLabel: "令和6年",  yearNum: 2024, num: 6 }
-    ]
-  },
+  // 13: TLS 1.3 (2)
+  { masterId: "PRED-37", category: "security", subcategory: "security", tags: ["TLS 1.3"], question: "【令和8年度 予想】TLS 1.3の主な変更点として適切なものはどれか。", choices: { "ア": "ハンドシェイクのラウンドトリップ(RTT)を1-RTT(条件により0-RTT)に短縮した", "イ": "RSA鍵交換方式をデフォルトで採用した", "ウ": "RC4などのストリーム暗号を復活させた", "エ": "前方秘匿性(PFS)を持たない暗号スイートを必須とした" }, answer: "ア", explanation: "TLS 1.3ではハンドシェイクが最適化され、基本1-RTTで接続が完了し、脆弱な古い暗号(RSA鍵交換、RC4、CBCモード等)は廃止されました。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 77 }] },
+  { masterId: "PRED-38", category: "security", subcategory: "security", tags: ["TLS 1.3"], question: "【令和8年度 予想】TLS 1.3で廃止された暗号スイートの特徴はどれか。", choices: { "ア": "AEAD (認証付き暗号) を使用するもの", "イ": "前方秘匿性 (PFS) を提供しないもの", "ウ": "楕円曲線暗号 (ECC) を使用するもの", "エ": "ChaCha20-Poly1305 を使用するもの" }, answer: "イ", explanation: "TLS 1.3ではセキュリティ強化のため、前方秘匿性を提供しないRSA鍵交換などが廃止され、DHE/ECDHEベースの鍵交換のみとなりました。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 78 }] },
 
-  // ===== 令和8年度 CBT最新予想問題 =====
-  {
-    masterId: "PRED-01", category: "network", subcategory: "http", tags: ["HTTP/3", "QUIC"],
-    question: "【令和8年度 予想】HTTP/3において、トランスポート層プロトコルとして採用されているものはどれか。",
-    choices: {
-      "ア": "QUIC (UDPベース)",
-      "イ": "TCP (TLS 1.3統合)",
-      "ウ": "SCTP",
-      "エ": "DCCP"
-    },
-    answer: "ア",
-    explanation: "HTTP/3では、TCPに起因するパケットロス時のHead-of-Line Blocking問題を根本的に解決するため、UDP上で動作する「QUIC」プロトコルを採用しています。QUIC自身にTLS 1.3相当の暗号化や輻輳制御が組み込まれています。",
-    appearances: [
-      { year: "R7", yearLabel: "令和7年(予想)", yearNum: 2025, num: 1 }
-    ]
-  },
-  {
-    masterId: "PRED-02", category: "security", subcategory: "security", tags: ["ゼロトラスト", "ZTNA"],
-    question: "【令和8年度 予想】従来の境界防御モデルに対する「ゼロトラスト(Zero Trust)」アーキテクチャの基本理念として、最も適切なものはどれか。",
-    choices: {
-      "ア": "社内ネットワークを含めすべての通信トラフィックを信頼できないものとし、アクセスごとにユーザ、端末の健全性、コンテキストを動的に検証・認可する。",
-      "イ": "社内LANと外部インターネットの境界に次世代ファイアウォールを配置し、境界内部の通信は無条件に信頼する。",
-      "ウ": "一度クライアント証明書で認証を通過した端末には、社内の全サーバへのフルアクセス権限を恒久的に付与する。",
-      "エ": "リモートアクセス手段としてVPN装置を増設し、社外端末をすべて社内LANアドレス体系に収容する。"
-    },
-    answer: "ア",
-    explanation: "ゼロトラストは「Never Trust, Always Verify (決して信頼せず、常に検証せよ)」を原則とします。ネットワークの物理的・論理的境界に依存せず、すべてのアクセス要求に対してID、デバイス健全性、振る舞い等を検証して最小特権アクセスを動的に付与します。",
-    appearances: [
-      { year: "R7", yearLabel: "令和7年(予想)", yearNum: 2025, num: 2 }
-    ]
-  },
-  {
-    masterId: "PRED-03", category: "security", subcategory: "security", tags: ["SASE"],
-    question: "【令和8年度 予想】ネットワーク機能とセキュリティ機能をクラウド上で統合して提供するアーキテクチャである「SASE (Secure Access Service Edge)」の説明として、適切なものはどれか。",
-    choices: {
-      "ア": "SD-WANなどのネットワーク接続機能と、SWG、CASB、ZTNA、FWaaSなどの包括的セキュリティ機能を単一のクラウドサービスとして統合・提供する。",
-      "イ": "各拠点ごとにオンプレミスのUTM(統合脅威管理)アプライアンスを個別設置して集中管理する。",
-      "ウ": "データセンター内のストレージ装置間のSAN(Storage Area Network)を暗号化する技術である。",
-      "エ": "サーバのCPU上で仮想マシンを高速に実行するためのハードウェアアクセラレーション技術である。"
-    },
-    answer: "ア",
-    explanation: "SASE(サシー: Secure Access Service Edge)は米ガートナーが提唱した概念で、SD-WANをはじめとするネットワーク機能と、SWG(セキュアWebゲートウェイ)、CASB、FWaaS、ZTNAなどのセキュリティ機能をクラウド上で一体化してエッジに提供するフレームワークです。",
-    appearances: [
-      { year: "R7", yearLabel: "令和7年(予想)", yearNum: 2025, num: 3 }
-    ]
-  },
-  {
-    masterId: "PRED-04", category: "network", subcategory: "routing", tags: ["SRv6"],
-    question: "【令和8年度 予想】SRv6 (Segment Routing over IPv6) に関する記述として、適切なものはどれか。",
-    choices: {
-      "ア": "IPv6拡張ヘッダであるセグメントルーティングヘッダ(SRH)に中継ノードの識別子リストを格納し、ネットワーク側で状態を持たずにソースルーティングを実現する。",
-      "イ": "MPLSのラベルスタックをIPv4ヘッダ内に直接埋め込む技術である。",
-      "ウ": "ルータのBGPテーブルを暗号化してルーティング情報の漏洩を防ぐ技術である。",
-      "エ": "IPv6パケットのホップリミットを固定化してルーティングループを許容する規格である。"
-    },
-    answer: "ア",
-    explanation: "SRv6は、パケット送信元がIPv6拡張ヘッダ(SRH: Segment Routing Header)にパケットが通過すべき経路(セグメントリスト)を埋め込むソースルーティング技術です。中継ルータが個別パス状態を記憶する必要がなく、柔軟なサービスチェイニングやトラフィックエンジニアリングが可能です。",
-    appearances: [
-      { year: "R7", yearLabel: "令和7年(予想)", yearNum: 2025, num: 4 }
-    ]
-  },
-  {
-    masterId: "PRED-05", category: "security", subcategory: "security", tags: ["RPKI"],
-    question: "【令和8年度 予想】BGPにおける経路ハイジャックや誤設定による不正な経路広告を防止するため、IPアドレス空間の正当な保有者とAS番号の対応関係を電子署名で検証する仕組みはどれか。",
-    choices: {
-      "ア": "RPKI (Resource Public Key Infrastructure)",
-      "イ": "DNSSEC",
-      "ウ": "IPsec AH",
-      "エ": "RADIUS"
-    },
-    answer: "ア",
-    explanation: "RPKI(Resource PKI)は、地域インターネットレジストリ(RIR)等が発行する電子証明書を用いて、IPプレフィックスを広告する正当な権限を持つAS番号の証明書(ROA: Route Origin Authorization)を発行し、BGPルータが不正な経路広告(BGPハイジャック)をフィルタリングできるようにする仕組みです。",
-    appearances: [
-      { year: "R7", yearLabel: "令和7年(予想)", yearNum: 2025, num: 5 }
-    ]
-  },
-  {
-    masterId: "PRED-06", category: "network", subcategory: "wireless", tags: ["Wi-Fi 6E", "Wi-Fi 7"],
-    question: "【令和8年度 予想】Wi-Fi 6Eにおいて、従来の2.4GHz帯および5GHz帯に加えて新たに利用可能となった周波数帯はどれか。",
-    choices: {
-      "ア": "6GHz帯 (5.925GHz〜7.125GHz)",
-      "イ": "60GHz帯 (ミリ波帯)",
-      "ウ": "900MHz帯 (サブギガ帯)",
-      "エ": "3.5GHz帯"
-    },
-    answer: "ア",
-    explanation: "Wi-Fi 6Eは、Wi-Fi 6(IEEE 802.11ax)の通信規格を「6GHz帯」に拡張した規格です。電波干渉の少ない広大な連続帯域(最大160MHz幅チャネル)が利用でき、超高速・超低遅延通信を実現します。",
-    appearances: [
-      { year: "R7", yearLabel: "令和7年(予想)", yearNum: 2025, num: 6 }
-    ]
-  }
+  // 14: Post-Quantum Crypto (2)
+  { masterId: "PRED-39", category: "security", subcategory: "security", tags: ["耐量子暗号"], question: "【令和8年度 予想】ポスト量子暗号(PQC: 耐量子計算機暗号)の主な目的はどれか。", choices: { "ア": "暗号化処理を量子コンピュータ上でのみ実行できるようにすること", "イ": "通信経路を光子の量子もつれを利用して保護すること", "ウ": "量子コンピュータを用いても解読が困難な暗号アルゴリズムを提供すること", "エ": "鍵の長さを無限大にすること" }, answer: "ウ", explanation: "PQC(耐量子計算機暗号)は、現在のコンピュータで実行可能でありながら、将来の量子コンピュータ(Shorのアルゴリズム等)でも解読が困難な新しい数学的問題に基づく暗号です。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 79 }] },
+  { masterId: "PRED-40", category: "security", subcategory: "security", tags: ["耐量子暗号"], question: "【令和8年度 予想】現在普及している公開鍵暗号(RSAや楕円曲線暗号)が量子コンピュータによって脅かされる根本的な理由はどれか。", choices: { "ア": "AESのような共通鍵暗号よりも鍵長が短いから", "イ": "ハッシュ関数の衝突耐性が完全に破られるから", "ウ": "インターネットの通信速度が向上したから", "エ": "素因数分解問題や離散対数問題が量子アルゴリズムで高速に解ける可能性があるため" }, answer: "エ", explanation: "Shorのアルゴリズムを大規模な量子コンピュータで実行すると、RSA(素因数分解)やECC(離散対数)の数学的根拠が破綻し、秘密鍵が計算されてしまいます。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 80 }] },
+
+  // 15: FIDO2 / WebAuthn (2)
+  { masterId: "PRED-41", category: "security", subcategory: "security", tags: ["FIDO2"], question: "【令和8年度 予想】FIDO2認証の特徴として適切なものはどれか。", choices: { "ア": "認証器側でローカル認証し、サーバとは公開鍵暗号による署名で認証を行う", "イ": "生体情報をサーバ側に送信して照合する", "ウ": "パスワードをサーバに平文で保存する", "エ": "SMSによるワンタイムパスワードを必須とする" }, answer: "ア", explanation: "FIDO2では、指紋や顔などの生体情報は端末(認証器)内にとどまり、サーバには公開鍵のみが登録され、秘密鍵による署名で認証を行います。フィッシング耐性が高いです。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 81 }] },
+  { masterId: "PRED-42", category: "security", subcategory: "security", tags: ["WebAuthn"], question: "【令和8年度 予想】FIDO2を構成する技術要素のうち、Webブラウザが認証器(Authenticator)と連携するための標準APIはどれか。", choices: { "ア": "OAuth 2.0", "イ": "WebAuthn", "ウ": "CTAP2", "エ": "SAML" }, answer: "イ", explanation: "FIDO2は、ブラウザとRP(サーバ)間のAPIである「WebAuthn (Web Authentication)」と、端末と外部認証器間のプロトコルである「CTAP2」で構成されます。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 82 }] },
+
+  // 16: CASB / CSPM (1)
+  { masterId: "PRED-43", category: "security", subcategory: "security", tags: ["CASB", "CSPM"], question: "【令和8年度 予想】クラウド環境におけるセキュリティ対策「CSPM(Cloud Security Posture Management)」の主な目的はどれか。", choices: { "ア": "従業員が利用するSaaSのシャドーITを可視化する", "イ": "マルウェアのシグネチャを自動更新する", "ウ": "IaaS/PaaS環境の設定ミスやコンプライアンス違反を継続的に監視する", "エ": "オンプレミスのログを集約する" }, answer: "ウ", explanation: "CSPMはAWSやAzureなどのIaaS/PaaSにおける不適切な設定(公開S3バケット等)を検出し、情報漏えいを未然に防ぐポスチャ管理ソリューションです。(アはCASB)", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 83 }] },
+
+  // 17: XDR / SOAR (2)
+  { masterId: "PRED-44", category: "security", subcategory: "security", tags: ["XDR"], question: "【令和8年度 予想】XDR (Extended Detection and Response) の特徴はどれか。", choices: { "ア": "ウイルス対策ソフトのパターンファイルを拡張する機能", "イ": "侵入検知システム(IDS)の誤検知をゼロにする技術", "ウ": "社内ネットワークをすべて暗号化するソリューション", "エ": "エンドポイントやネットワーク等の複数ドメインのログを統合・分析し脅威に対応する" }, answer: "エ", explanation: "XDRは、EDRをさらに発展させ、NDR(ネットワーク)やクラウドのテレメトリを統合して、サイロ化されたセキュリティを横断的に相関分析します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 84 }] },
+  { masterId: "PRED-45", category: "security", subcategory: "security", tags: ["SOAR"], question: "【令和8年度 予想】SOAR (Security Orchestration, Automation and Response) が解決する主な課題はどれか。", choices: { "ア": "インシデント対応の属人化解消と、定型対応作業の自動化(プレイブック化)", "イ": "パスワードの定期変更", "ウ": "ゼロデイ脆弱性の自動パッチ適用", "エ": "ネットワーク帯域の拡張" }, answer: "ア", explanation: "SOARは、SIEM等が発報したアラートに対する初動対応(IPブロックや隔離等)を「プレイブック」に従って自動化・オーケストレーションし、SOCの負荷を軽減します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 85 }] },
+
+  // 18: Container / Service Mesh (2)
+  { masterId: "PRED-46", category: "other", subcategory: "other", tags: ["Service Mesh"], question: "【令和8年度 予想】コンテナ環境における「サービスメッシュ(例: Istio)」が提供する主な機能はどれか。", choices: { "ア": "OSのカーネルを仮想化する機能", "イ": "マイクロサービス間の通信(トラフィック制御、mTLS暗号化、可視化等)を、アプリケーションコードを変更せずにサイドカープロキシで実現する", "ウ": "コンテナのイメージビルドを高速化する", "エ": "ハードウェアロードバランサをリプレースする" }, answer: "イ", explanation: "サービスメッシュは、各コンテナに「サイドカープロキシ(Envoyなど)」をデプロイし、アプリからネットワーク制御処理を分離(インフラ層にオフロード)します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 86 }] },
+  { masterId: "PRED-47", category: "other", subcategory: "other", tags: ["Container", "CNI"], question: "【令和8年度 予想】Kubernetesにおいて、コンテナ(Pod)のネットワークインターフェースの設定やIPアドレス割り当てを行う標準インターフェースはどれか。", choices: { "ア": "CRI", "イ": "CSI", "ウ": "CNI (Container Network Interface)", "エ": "OCI" }, answer: "ウ", explanation: "CNI(Container Network Interface)はコンテナネットワークを構築するための共通仕様であり、CalicoやFlannelなどの各種プラグインがCNIに準拠して動作します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 87 }] },
+
+  // 19: IaC / Automation (2)
+  { masterId: "PRED-48", category: "other", subcategory: "other", tags: ["IaC", "Ansible"], question: "【令和8年度 予想】インフラストラクチャ・アズ・コード(IaC)ツールであるAnsibleの特徴として適切なものはどれか。", choices: { "ア": "対象機器に専用エージェントのインストールが必須", "イ": "C言語でのコーディングが必須", "ウ": "状態を管理せず全てのコマンドを実行し直す", "エ": "エージェントレスで動作し、SSH等で接続して構成を適用する(冪等性)" }, answer: "エ", explanation: "Ansibleはエージェントレスで動作し、YAML形式のPlaybookで定義された状態へ冪等性(何度実行しても同じ状態になる)を保ちながら適用します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 88 }] },
+  { masterId: "PRED-49", category: "other", subcategory: "other", tags: ["NETCONF", "YANG"], question: "【令和8年度 予想】ネットワーク機器の設定自動化において、データモデル言語「YANG」と共に使用されることが多い、XMLベースの構成管理プロトコルはどれか。", choices: { "ア": "NETCONF", "イ": "SNMP", "ウ": "Syslog", "エ": "Telnet" }, answer: "ア", explanation: "NETCONFはネットワーク機器の構成を操作・取得するためのプロトコルで、設定データのモデリングにはYANGが標準的に使われます。RESTCONFも存在します。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 89 }] },
+
+  // 20: Reliability (1)
+  { masterId: "PRED-50", category: "other", subcategory: "other", tags: ["信頼性"], question: "【令和8年度 予想】稼働率99%のシステムAと稼働率99%のシステムBを並列に構成した場合、システム全体の稼働率はいくらか。(片方が稼働していればシステム全体として稼働とみなす)", choices: { "ア": "98.01%", "イ": "99.99%", "ウ": "99.00%", "エ": "99.90%" }, answer: "イ", explanation: "並列システムの稼働率は 1 - (1 - R_A) * (1 - R_B) で計算します。1 - (0.01 * 0.01) = 1 - 0.0001 = 0.9999 (99.99%) となります。", appearances: [{ year: "R8", yearLabel: "令和8年(予想)", yearNum: 2026, num: 90 }] }
 ];
 
 // フラットなQUESTIONS_DBとREUSE_MAPの自動構築
