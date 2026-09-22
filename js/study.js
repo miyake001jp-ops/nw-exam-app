@@ -23,13 +23,19 @@ class StudyManager {
       return false;
     }
 
-    // ★ 常に同一問題(masterId)の重複を排除する
-    // 同じ問題を繰り返し表示しても学習効率が悪いため、
-    // どのモード・どの並び順でも最新年度の1問だけを残す
-    this.currentQuestions = this.deduplicateQuestions(this.currentQuestions);
+    // 単一年度選択時はその年度の全25問をそのまま学習できるようにする。
+    // 「すべての年度」または複数年度選択時のみ、同一問題(masterId)の重複を排除して最新年度の1問を残す。
+    const isSingleYear = options.years && options.years.length === 1 && options.years[0] !== 'all';
+    if (!isSingleYear) {
+      this.currentQuestions = this.deduplicateQuestions(this.currentQuestions);
+    }
 
     if (this.currentQuestions.length === 0) {
       return false;
+    }
+
+    if (isSingleYear && options.sort === 'asc') {
+      this.currentQuestions.sort((a, b) => (a.number || 0) - (b.number || 0));
     }
 
     if (this.mode === 'test') {
@@ -149,7 +155,7 @@ class StudyManager {
       const years = q.sameAs.map(id => {
         const parts = id.split('-');
         const y = parts[0];
-        const yearLabel = y.startsWith('H') ? `平成${y.slice(1)}年` : `令和${y.slice(1)}年`;
+        const yearLabel = (typeof YEAR_MAP !== 'undefined' && YEAR_MAP[y]?.label) || (y === 'R1' ? '令和元年' : (y.startsWith('H') ? `平成${y.slice(1)}年` : `令和${y.slice(1)}年`));
         return `${yearLabel} ${parts[1]}`;
       }).join('、');
       historyText = `📚 この問題は過去【計${totalCount}回】出題されている超頻出問題です！（出題履歴: ${years}）`;

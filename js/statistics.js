@@ -228,6 +228,10 @@ class StatisticsManager {
 
   // ===== ユーティリティ =====
   _formatYear(year) {
+    if (typeof YEAR_MAP !== 'undefined' && YEAR_MAP[year]?.label) {
+      return YEAR_MAP[year].label;
+    }
+    if (year === 'R1') return '令和元年';
     if (year.startsWith('H')) return `平成${year.slice(1)}年`;
     if (year.startsWith('R')) return `令和${year.slice(1)}年`;
     return year;

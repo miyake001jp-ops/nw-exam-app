@@ -1,8 +1,9 @@
-const CACHE_NAME = 'nw-exam-app-v8';
+const CACHE_NAME = 'nw-exam-app-v9';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
+  './js/db.js',
   './js/app.js',
   './js/questions.js',
   './js/study.js',

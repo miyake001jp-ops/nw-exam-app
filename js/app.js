@@ -131,12 +131,12 @@ class App {
     if (yearSelect) {
       const years = [...new Set(QUESTIONS_DB.filter(q => !q.isPrediction).map(q => q.year))];
       years.sort((a, b) => {
-        const numA = a.startsWith('H') ? parseInt(a.slice(1)) : parseInt(a.slice(1)) + 30;
-        const numB = b.startsWith('H') ? parseInt(b.slice(1)) : parseInt(b.slice(1)) + 30;
+        const numA = (typeof YEAR_MAP !== 'undefined' && YEAR_MAP[a]?.num) || (a.startsWith('H') ? parseInt(a.slice(1)) : parseInt(a.slice(1)) + 30);
+        const numB = (typeof YEAR_MAP !== 'undefined' && YEAR_MAP[b]?.num) || (b.startsWith('H') ? parseInt(b.slice(1)) : parseInt(b.slice(1)) + 30);
         return numA - numB;
       });
       years.forEach(y => {
-        const label = y.startsWith('H') ? `平成${y.slice(1)}年` : `令和${y.slice(1)}年`;
+        const label = (typeof YEAR_MAP !== 'undefined' && YEAR_MAP[y]?.label) || (y === 'R1' ? '令和元年' : (y.startsWith('H') ? `平成${y.slice(1)}年` : `令和${y.slice(1)}年`));
         yearSelect.innerHTML += `<option value="${y}">${label}</option>`;
       });
     }
@@ -556,7 +556,8 @@ class App {
         }
         histList.innerHTML = sameAs.map(id => {
           const parts = id.split('-');
-          const yLabel = parts[0].startsWith('H') ? `平成${parts[0].slice(1)}年` : `令和${parts[0].slice(1)}年`;
+          const y = parts[0];
+          const yLabel = (typeof YEAR_MAP !== 'undefined' && YEAR_MAP[y]?.label) || (y === 'R1' ? '令和元年' : (y.startsWith('H') ? `平成${y.slice(1)}年` : `令和${y.slice(1)}年`));
           return `<li><strong>${yLabel} ${parts[1]}</strong>（同一問題・同一解答）</li>`;
         }).join('');
       } else {
