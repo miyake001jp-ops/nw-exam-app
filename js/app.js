@@ -50,9 +50,33 @@ class App {
       await this.updateDashboard();
       await this.updateSkippedCountBadge();
 
-      // Service Worker 登録
+      // 古いキャッシュによる選択肢欠損の自動検出＆自動キャッシュパージ
+      if (typeof QUESTIONS_DB !== 'undefined') {
+        const r7q6 = QUESTIONS_DB.find(q => q.id === 'R7-Q06');
+        if (r7q6 && (!r7q6.choices || !r7q6.choices['ア'] || r7q6.choices['ア'].trim() === '')) {
+          console.warn('古いキャッシュデータを検出しました。キャッシュを自動更新します...');
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const r of regs) await r.unregister();
+          }
+          window.location.reload(true);
+          return;
+        }
+      }
+
+      // Service Worker 登録と更新チェック
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          reg.update().catch(() => {});
+        }).catch(() => {});
+        
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('最新のService Workerが有効化されました');
+        });
       }
 
       console.log(`NW午前II対策アプリ起動完了: ${QUESTIONS_DB.length}問読み込み済み`);
@@ -330,6 +354,22 @@ class App {
         await this.updateDashboard();
         await this.updateSkippedCountBadge();
       }
+    });
+
+    // キャッシュ強制更新
+    document.getElementById('force-update-btn')?.addEventListener('click', async () => {
+      this.showToast('最新データを再取得しています...', 'info');
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const r of regs) await r.unregister();
+        }
+      } catch (err) {}
+      window.location.reload(true);
     });
 
     // カスタムイベント

@@ -389,13 +389,14 @@
 
                 <div class="card">
                     <h3>データ管理</h3>
-                    <button class="btn btn-danger" id="reset-data-btn">学習履歴をすべてリセット</button>
+                    <button class="btn btn-secondary" id="force-update-btn" style="margin-bottom: 12px; width: 100%;">🔄 キャッシュ更新（最新問題データを取得）</button>
+                    <button class="btn btn-danger" id="reset-data-btn" style="width: 100%;">学習履歴をすべてリセット</button>
                 </div>
 
                 <div class="card">
                     <h3>アプリについて</h3>
                     <p>ネットワークスペシャリスト試験 午前II 対策アプリ</p>
-                    <p class="text-small">Version 1.0.0</p>
+                    <p class="text-small">Version 1.2.0 (令和7年〜平成21年 全450問完全収録)</p>
                 </div>
             </section>
         </main>
@@ -422,12 +423,11 @@
     </div>
 
     <!-- Scripts -->
-    <!-- Define files that will be created later -->
-    <script src="js/questions.js" defer></script>
-    <script src="js/study.js" defer></script>
-    <script src="js/statistics.js" defer></script>
-    <script src="js/charts.js" defer></script>
-    <script src="js/sync.js" defer></script>
-    <script src="js/app.js" defer></script>
+    <script src="js/questions.js?v=12" defer></script>
+    <script src="js/study.js?v=12" defer></script>
+    <script src="js/statistics.js?v=12" defer></script>
+    <script src="js/charts.js?v=12" defer></script>
+    <script src="js/sync.js?v=12" defer></script>
+    <script src="js/app.js?v=12" defer></script>
 </body>
 </html>
