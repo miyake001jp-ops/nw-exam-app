@@ -110,6 +110,12 @@
                             <option value="freq">頻出順</option>
                         </select>
                     </div>
+                    <div class="filter-group filter-checkbox-group">
+                        <label class="checkbox-label" for="study-skip-mastered" title="5回連続正解した問題を学習から除外します">
+                            <input type="checkbox" id="study-skip-mastered" checked>
+                            <span>5連続正解をスキップ</span>
+                        </label>
+                    </div>
                     <button class="btn btn-primary" id="start-study-btn">開始</button>
                 </div>
 
@@ -134,7 +140,15 @@
                     </div>
 
                     <div class="feedback-container card hidden" id="study-feedback">
-                        <h3 id="study-result-title">正解！</h3>
+                        <div class="feedback-header">
+                            <h3 id="study-result-title">正解！</h3>
+                            <div class="mastery-status-container" id="study-mastery-container">
+                                <span class="badge mastery-badge" id="study-streak-badge">🔥 連続正解: 0/5回</span>
+                                <button class="btn btn-small btn-outline" id="study-toggle-skip-btn" type="button" title="この問題のスキップ状態を手動で切り替えます">
+                                    スキップ: <span id="study-skip-status-label">OFF</span>
+                                </button>
+                            </div>
+                        </div>
                         <p><strong>正解: <span id="study-correct-ans"></span></strong></p>
                         <div class="explanation" id="study-explanation">解説がここに表示されます。</div>
                         
@@ -329,6 +343,25 @@
                             <input type="checkbox" id="dark-mode-toggle">
                             <span class="slider round"></span>
                         </label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>学習・スキップ設定</h3>
+                    <p class="text-small">同一問題で5回連続正解した習得済み問題を、学習モードから自動で除外（スキップ）して効率的に学習できます。</p>
+                    <div class="setting-item">
+                        <span>5回連続正解で自動スキップ</span>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-skip-toggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item" style="border-top: 1px solid var(--border-color); margin-top: 0.5rem; padding-top: 0.75rem;">
+                        <span>現在スキップ対象の問題数</span>
+                        <span id="skipped-count-badge" class="badge" style="background-color: var(--primary-color); color: white; font-size: 0.9rem;">0 問</span>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-outline" id="reset-skips-btn" style="font-size: 0.85rem;">個別スキップ設定をすべてリセット</button>
                     </div>
                 </div>
 

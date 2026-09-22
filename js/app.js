@@ -31,6 +31,13 @@ class App {
         if (toggle) toggle.checked = true;
       }
 
+      // スキップ設定読み込み
+      const skipSettings = await this.db.getSkipSettings();
+      const autoSkipToggle = document.getElementById('auto-skip-toggle');
+      const studySkipMastered = document.getElementById('study-skip-mastered');
+      if (autoSkipToggle) autoSkipToggle.checked = skipSettings.autoSkipEnabled;
+      if (studySkipMastered) studySkipMastered.checked = skipSettings.autoSkipEnabled;
+
       // URLパラメータ同期チェック (?sync=...)
       const urlParams = new URLSearchParams(window.location.search);
       const syncPayload = urlParams.get('sync');
@@ -41,6 +48,7 @@ class App {
       // 初期ページ表示
       this.navigate('home');
       await this.updateDashboard();
+      await this.updateSkippedCountBadge();
 
       // Service Worker 登録
       if ('serviceWorker' in navigator) {
@@ -111,6 +119,7 @@ class App {
     // ページ固有処理
     if (page === 'home') this.updateDashboard();
     if (page === 'stats') this.renderStatistics();
+    if (page === 'settings') this.updateSkippedCountBadge();
   }
 
   // ===== フィルター初期化 =====
@@ -227,6 +236,46 @@ class App {
       });
     }
 
+    // スキップ設定
+    const autoSkipToggle = document.getElementById('auto-skip-toggle');
+    if (autoSkipToggle) {
+      autoSkipToggle.addEventListener('change', async () => {
+        const isEnabled = autoSkipToggle.checked;
+        await this.db.setAutoSkipEnabled(isEnabled);
+        const studySkipMastered = document.getElementById('study-skip-mastered');
+        if (studySkipMastered) studySkipMastered.checked = isEnabled;
+        await this.updateSkippedCountBadge();
+        this.showToast(isEnabled ? '5回連続正解の自動スキップを有効にしました' : '自動スキップを無効にしました');
+      });
+    }
+
+    // スキップ設定リセット
+    const resetSkipsBtn = document.getElementById('reset-skips-btn');
+    if (resetSkipsBtn) {
+      resetSkipsBtn.addEventListener('click', async () => {
+        if (confirm('問題個別に設定したスキップ状態（手動ON/OFF）をすべて初期化しますか？')) {
+          await this.db.resetAllSkips();
+          await this.updateSkippedCountBadge();
+          this.showToast('個別スキップ設定を初期化しました');
+        }
+      });
+    }
+
+    // 解説画面での個別スキップ切り替えボタン
+    const toggleSkipBtn = document.getElementById('study-toggle-skip-btn');
+    if (toggleSkipBtn) {
+      toggleSkipBtn.addEventListener('click', async () => {
+        if (!this.currentExplanationQuestion) return;
+        const q = this.currentExplanationQuestion;
+        const mId = q.masterId || q.id;
+        const newStatus = await this.db.toggleQuestionSkipOverride(mId);
+        const mastery = await this.db.getQuestionMasteryStatus(q.id);
+        this.updateExplanationMasteryUI(mastery);
+        this.showToast(`この問題のスキップを ${newStatus ? 'ON (次回以降スキップ)' : 'OFF (学習対象に復帰)'} に設定しました`);
+        await this.updateSkippedCountBadge();
+      });
+    }
+
     // エクスポート
     document.getElementById('export-btn')?.addEventListener('click', async () => {
       try {
@@ -256,6 +305,7 @@ class App {
         await this.db.importData(text);
         this.showToast('データをインポートしました');
         await this.updateDashboard();
+        await this.updateSkippedCountBadge();
       } catch (err) {
         this.showToast('インポートに失敗しました', 'error');
       }
@@ -278,6 +328,7 @@ class App {
         await this.db.clearAllData();
         this.showToast('データをリセットしました');
         await this.updateDashboard();
+        await this.updateSkippedCountBadge();
       }
     });
 
@@ -286,7 +337,10 @@ class App {
     document.addEventListener('render-explanation', (e) => this.renderExplanation(e.detail));
     document.addEventListener('timer-tick', (e) => this.updateTimer(e.detail));
     document.addEventListener('render-test-results', (e) => this.renderTestResults(e.detail));
-    document.addEventListener('answer-recorded', () => this.updateDashboard());
+    document.addEventListener('answer-recorded', async () => {
+      await this.updateDashboard();
+      await this.updateSkippedCountBadge();
+    });
     document.addEventListener('session-ended', () => this.onSessionEnded());
   }
 
@@ -318,35 +372,43 @@ class App {
     const field = document.getElementById('study-field')?.value;
     const subcat = document.getElementById('study-subcat')?.value;
     const sort = document.getElementById('study-sort')?.value;
+    const skipMastered = document.getElementById('study-skip-mastered')?.checked;
 
     const options = {
       mode: 'study',
       years: year && year !== 'all' ? [year] : [],
       categories: field && field !== 'all' ? [field] : [],
       subcategories: subcat && subcat !== 'all' ? [subcat] : [],
-      sort: sort || 'asc'
+      sort: sort || 'asc',
+      skipMastered: !!skipMastered
     };
 
     const ok = await this.studyManager.startSession(options);
     if (ok) {
       document.getElementById('study-area')?.classList.remove('hidden');
     } else {
-      this.showToast('条件に該当する問題がありません。', 'error');
+      this.showToast('条件に該当する問題がありません（全てスキップ対象の可能性があります。「5連続正解をスキップ」のチェックを外すか、設定を確認してください）。', 'error');
     }
   }
 
   async startRecommendedSession() {
     // ホーム画面の「おすすめを解く」ボタン用
     // フィルタドロップダウンに依存せず、ランダム順で全問題を学習
+    const skipMastered = document.getElementById('study-skip-mastered')?.checked ?? true;
     const options = {
       mode: 'study',
       years: [],
       categories: [],
       subcategories: [],
-      sort: 'random'
+      sort: 'random',
+      skipMastered
     };
 
-    const ok = await this.studyManager.startSession(options);
+    let ok = await this.studyManager.startSession(options);
+    if (!ok && skipMastered) {
+      // スキップ対象外の問題が尽きた場合は、スキップなしで再試行
+      ok = await this.studyManager.startSession({ ...options, skipMastered: false });
+    }
     if (ok) {
       // 学習ページに遷移してUI表示
       this.navigate('study');
@@ -509,6 +571,72 @@ class App {
       if (choice === detail.question.answer) btn.classList.add('correct');
       if (choice === detail.answer.choice && !detail.answer.isCorrect) btn.classList.add('wrong');
     });
+
+    // 連続正解数・スキップ状態の表示更新
+    this.currentExplanationQuestion = detail.question;
+    if (detail.mastery) {
+      this.updateExplanationMasteryUI(detail.mastery);
+    }
+  }
+
+  updateExplanationMasteryUI(mastery) {
+    const streakBadge = document.getElementById('study-streak-badge');
+    const skipLabel = document.getElementById('study-skip-status-label');
+    const skipBtn = document.getElementById('study-toggle-skip-btn');
+    if (!streakBadge || !skipLabel || !skipBtn) return;
+
+    const streak = mastery.consecutiveCorrect || 0;
+    const isSkipped = !!mastery.isSkipped;
+
+    streakBadge.className = 'badge mastery-badge';
+    if (isSkipped) {
+      if (mastery.isManual && mastery.manualValue === true) {
+        streakBadge.classList.add('skipped');
+        streakBadge.textContent = `📌 手動スキップ中 (連続正解 ${streak}回)`;
+      } else {
+        streakBadge.classList.add('mastered');
+        streakBadge.textContent = `🎉 習得済み (${streak}連続正解・自動スキップ中)`;
+      }
+    } else {
+      if (mastery.isManual && mastery.manualValue === false) {
+        streakBadge.textContent = `🔄 スキップ解除中 (連続正解 ${streak}回)`;
+      } else {
+        streakBadge.textContent = `🔥 連続正解: ${streak}/5回`;
+      }
+    }
+
+    skipLabel.textContent = isSkipped ? 'ON' : 'OFF';
+    if (isSkipped) {
+      skipBtn.classList.remove('btn-outline');
+      skipBtn.classList.add('btn-primary');
+    } else {
+      skipBtn.classList.remove('btn-primary');
+      skipBtn.classList.add('btn-outline');
+    }
+  }
+
+  async updateSkippedCountBadge() {
+    try {
+      const badge = document.getElementById('skipped-count-badge');
+      if (!badge || typeof QUESTIONS_DB === 'undefined') return;
+      const stats = await this.db.getAllMasteryStats();
+      const settings = await this.db.getSkipSettings();
+
+      const seenMasterIds = new Set();
+      let skippedCount = 0;
+      for (const q of QUESTIONS_DB) {
+        const mId = q.masterId || q.id;
+        if (!seenMasterIds.has(mId)) {
+          seenMasterIds.add(mId);
+          if (this.db.isQuestionSkipped(mId, settings.autoSkipEnabled, settings.manualOverrides, stats)) {
+            skippedCount++;
+          }
+        }
+      }
+      badge.textContent = `${skippedCount} 問`;
+    } catch (e) {
+      console.error('スキップバッジ更新エラー:', e);
+    }
   }
 
   updateTimer(detail) {

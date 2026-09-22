@@ -135,11 +135,11 @@ class StudyManager {
       setTimeout(() => this.nextQuestion(), 300);
     } else {
       // 学習モードでは解説を表示
-      this.showExplanation();
+      await this.showExplanation();
     }
   }
 
-  showExplanation() {
+  async showExplanation() {
     const q = this.currentQuestions[this.currentIndex];
     const ans = this.answers[this.currentIndex];
 
@@ -155,8 +155,16 @@ class StudyManager {
       historyText = `📚 この問題は過去【計${totalCount}回】出題されている超頻出問題です！（出題履歴: ${years}）`;
     }
 
+    const mastery = await this.db.getQuestionMasteryStatus(q.id);
+
     document.dispatchEvent(new CustomEvent('render-explanation', {
-      detail: { question: q, answer: ans, historyText, totalAppearances: totalCount }
+      detail: {
+        question: q,
+        answer: ans,
+        historyText,
+        totalAppearances: totalCount,
+        mastery
+      }
     }));
   }
 
@@ -284,6 +292,29 @@ class StudyManager {
     // 予想問題モード
     if (filters.mode === 'prediction') {
       filtered = filtered.filter(q => q.isPrediction === true);
+    }
+
+    // ★ 5回連続正解（習得済み）問題のスキップ処理
+    // テストモード以外で、スキップ機能が有効な場合に適用
+    if (filters.mode !== 'test') {
+      const skipSettings = await this.db.getSkipSettings();
+      const shouldFilterSkipped = (filters.skipMastered !== undefined)
+        ? !!filters.skipMastered
+        : skipSettings.autoSkipEnabled;
+
+      if (shouldFilterSkipped) {
+        const masteryStats = await this.db.getAllMasteryStats();
+        filtered = filtered.filter(q => {
+          const mId = q.masterId || q.id;
+          const isSkipped = this.db.isQuestionSkipped(
+            mId,
+            true, // 個別判定時に5連続正解判定を適用
+            skipSettings.manualOverrides,
+            masteryStats
+          );
+          return !isSkipped;
+        });
+      }
     }
 
     return filtered;

@@ -134,6 +134,133 @@ class DataSync {
     });
   }
 
+  getMasterId(questionId) {
+    if (typeof QUESTIONS_DB !== 'undefined' && Array.isArray(QUESTIONS_DB)) {
+      const q = QUESTIONS_DB.find(item => item.id === questionId);
+      if (q && q.masterId) return q.masterId;
+    }
+    return questionId;
+  }
+
+  async getAllMasteryStats() {
+    const answers = await this.getAllAnswers();
+    const answersByMaster = {};
+    for (const a of answers) {
+      const mId = this.getMasterId(a.questionId);
+      if (!answersByMaster[mId]) answersByMaster[mId] = [];
+      answersByMaster[mId].push(a);
+    }
+
+    const stats = {};
+    for (const [mId, list] of Object.entries(answersByMaster)) {
+      list.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      let consecutiveCorrect = 0;
+      let totalCorrect = 0;
+      for (const ans of list) {
+        if (ans.isCorrect) {
+          totalCorrect++;
+          consecutiveCorrect++;
+        } else {
+          consecutiveCorrect = 0;
+        }
+      }
+      stats[mId] = {
+        masterId: mId,
+        consecutiveCorrect,
+        isMastered: consecutiveCorrect >= 5,
+        totalAnswers: list.length,
+        totalCorrect,
+        lastAnswered: list[list.length - 1].timestamp || 0
+      };
+    }
+    return stats;
+  }
+
+  async getSkipSettings() {
+    const autoSkip = await this.getSetting('autoSkipMastered');
+    const overrides = await this.getSetting('skipOverrides');
+    return {
+      autoSkipEnabled: autoSkip !== false, // デフォルト有効 (true)
+      manualOverrides: overrides || {}     // { [masterId]: boolean }
+    };
+  }
+
+  async setAutoSkipEnabled(enabled) {
+    return this.saveSetting('autoSkipMastered', !!enabled);
+  }
+
+  async setQuestionSkipOverride(masterId, isSkipped) {
+    const overrides = (await this.getSetting('skipOverrides')) || {};
+    if (isSkipped === null) {
+      delete overrides[masterId];
+    } else {
+      overrides[masterId] = !!isSkipped;
+    }
+    return this.saveSetting('skipOverrides', overrides);
+  }
+
+  async toggleQuestionSkipOverride(masterId) {
+    const stats = await this.getAllMasteryStats();
+    const settings = await this.getSkipSettings();
+    const mStats = stats[masterId] || { consecutiveCorrect: 0, isMastered: false };
+
+    let currentlySkipped = false;
+    if (settings.manualOverrides.hasOwnProperty(masterId)) {
+      currentlySkipped = settings.manualOverrides[masterId];
+    } else {
+      currentlySkipped = settings.autoSkipEnabled && mStats.isMastered;
+    }
+
+    const newStatus = !currentlySkipped;
+    await this.setQuestionSkipOverride(masterId, newStatus);
+    return newStatus;
+  }
+
+  isQuestionSkipped(masterId, autoSkipEnabled = true, manualOverrides = {}, stats = {}) {
+    if (manualOverrides && manualOverrides.hasOwnProperty(masterId)) {
+      return !!manualOverrides[masterId];
+    }
+    if (!autoSkipEnabled) return false;
+    const mStat = stats[masterId];
+    return !!(mStat && mStat.consecutiveCorrect >= 5);
+  }
+
+  async getQuestionMasteryStatus(questionId) {
+    const masterId = this.getMasterId(questionId);
+    const stats = await this.getAllMasteryStats();
+    const settings = await this.getSkipSettings();
+    const mStat = stats[masterId] || {
+      masterId,
+      consecutiveCorrect: 0,
+      isMastered: false,
+      totalAnswers: 0,
+      totalCorrect: 0
+    };
+
+    const isSkipped = this.isQuestionSkipped(
+      masterId,
+      settings.autoSkipEnabled,
+      settings.manualOverrides,
+      stats
+    );
+
+    const isManual = settings.manualOverrides && settings.manualOverrides.hasOwnProperty(masterId);
+
+    return {
+      masterId,
+      consecutiveCorrect: mStat.consecutiveCorrect,
+      isMastered: mStat.consecutiveCorrect >= 5,
+      isSkipped,
+      isManual,
+      manualValue: isManual ? settings.manualOverrides[masterId] : null
+    };
+  }
+
+  async resetAllSkips() {
+    await this.saveSetting('skipOverrides', {});
+  }
+
+
   async recordStudyDay() {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     return new Promise((resolve, reject) => {
