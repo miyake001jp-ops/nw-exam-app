@@ -24,9 +24,11 @@ class StudyManager {
     }
 
     // 単一年度選択時はその年度の全25問をそのまま学習できるようにする。
-    // 「すべての年度」または複数年度選択時のみ、同一問題(masterId)の重複を排除して最新年度の1問を残す。
+    // 「すべての年度」または複数年度選択時でも、出題順(asc)の時は各年度の全問（最新年度〜過去年度、各問1〜25）を完全出題する。
+    // 頻出順(freq)または重複排除が明示された場合のみ、同一問題(masterId)を1問に集約する。
     const isSingleYear = options.years && options.years.length === 1 && options.years[0] !== 'all';
-    if (!isSingleYear) {
+    const shouldDeduplicate = options.deduplicate || (options.sort === 'freq' && !isSingleYear);
+    if (shouldDeduplicate) {
       this.currentQuestions = this.deduplicateQuestions(this.currentQuestions);
     }
 
@@ -34,8 +36,11 @@ class StudyManager {
       return false;
     }
 
-    if (isSingleYear && options.sort === 'asc') {
-      this.currentQuestions.sort((a, b) => (a.number || 0) - (b.number || 0));
+    if (options.sort === 'asc') {
+      this.currentQuestions.sort((a, b) => {
+        if (a.yearNum !== b.yearNum) return (b.yearNum || 0) - (a.yearNum || 0);
+        return (a.number || 0) - (b.number || 0);
+      });
     }
 
     if (this.mode === 'test') {

@@ -178,10 +178,16 @@ class DataSync {
 
   async getSkipSettings() {
     const autoSkip = await this.getSetting('autoSkipMastered');
-    const overrides = await this.getSetting('skipOverrides');
+    const overrides = (await this.getSetting('skipOverrides')) || {};
+    // 古い不具合データ (M-R, M-H) の手動オーバーライドを自動パージ
+    if (overrides.hasOwnProperty('M-R') || overrides.hasOwnProperty('M-H')) {
+      delete overrides['M-R'];
+      delete overrides['M-H'];
+      await this.saveSetting('skipOverrides', overrides);
+    }
     return {
       autoSkipEnabled: autoSkip !== false, // デフォルト有効 (true)
-      manualOverrides: overrides || {}     // { [masterId]: boolean }
+      manualOverrides: overrides     // { [masterId]: boolean }
     };
   }
 

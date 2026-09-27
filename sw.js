@@ -1,8 +1,10 @@
-const CACHE_NAME = 'nw-exam-app-v12';
+const CACHE_NAME = 'nw-exam-app-v13';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
+  './js/lib/chart.min.js',
+  './js/lib/qrcode.min.js',
   './js/app.js',
   './js/questions.js',
   './js/study.js',
@@ -65,7 +67,13 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           // オフライン時はキャッシュから返す
-          return caches.match(event.request);
+          return caches.match(event.request).then((cached) => {
+            if (cached) return cached;
+            if (event.request.mode === 'navigate') {
+              return caches.match('./index.html');
+            }
+            return caches.match('./');
+          });
         })
     );
     return;

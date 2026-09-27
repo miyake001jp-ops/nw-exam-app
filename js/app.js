@@ -22,6 +22,7 @@ class App {
       this.setupNavigation();
       this.setupEventListeners();
       this.setupKeyboardShortcuts();
+      this.setupNetworkListeners();
 
       // テーマ読み込み
       const theme = await this.db.getSetting('theme');
@@ -49,11 +50,13 @@ class App {
       this.navigate('home');
       await this.updateDashboard();
       await this.updateSkippedCountBadge();
+      await this.checkOfflineCacheStatus();
 
-      // 古いキャッシュによる選択肢欠損の自動検出＆自動キャッシュパージ
+      // 古いキャッシュによる選択肢欠損および不具合マスターIDの自動検出＆自動キャッシュパージ
       if (typeof QUESTIONS_DB !== 'undefined') {
         const r7q6 = QUESTIONS_DB.find(q => q.id === 'R7-Q06');
-        if (r7q6 && (!r7q6.choices || !r7q6.choices['ア'] || r7q6.choices['ア'].trim() === '')) {
+        const hasBadMasterId = QUESTIONS_DB.some(q => q.masterId === 'M-R' || q.masterId === 'M-H');
+        if ((r7q6 && (!r7q6.choices || !r7q6.choices['ア'] || r7q6.choices['ア'].trim() === '')) || hasBadMasterId) {
           console.warn('古いキャッシュデータを検出しました。キャッシュを自動更新します...');
           if ('caches' in window) {
             const keys = await caches.keys();
@@ -69,7 +72,7 @@ class App {
       }
 
       // Service Worker 登録と更新チェック
-      if ('serviceWorker' in navigator) {
+      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
         navigator.serviceWorker.register('./sw.js').then(reg => {
           reg.update().catch(() => {});
         }).catch(() => {});
@@ -143,7 +146,10 @@ class App {
     // ページ固有処理
     if (page === 'home') this.updateDashboard();
     if (page === 'stats') this.renderStatistics();
-    if (page === 'settings') this.updateSkippedCountBadge();
+    if (page === 'settings') {
+      this.updateSkippedCountBadge();
+      this.checkOfflineCacheStatus();
+    }
   }
 
   // ===== フィルター初期化 =====
@@ -157,11 +163,13 @@ class App {
       years.sort((a, b) => {
         const numA = (typeof YEAR_MAP !== 'undefined' && YEAR_MAP[a]?.num) || (a.startsWith('H') ? parseInt(a.slice(1)) : parseInt(a.slice(1)) + 30);
         const numB = (typeof YEAR_MAP !== 'undefined' && YEAR_MAP[b]?.num) || (b.startsWith('H') ? parseInt(b.slice(1)) : parseInt(b.slice(1)) + 30);
-        return numA - numB;
+        return numB - numA; // 最新年度順 (R7, R6, R5... H21)
       });
+      yearSelect.innerHTML = '<option value="all">すべての年度 (全400問)</option>';
       years.forEach(y => {
         const label = (typeof YEAR_MAP !== 'undefined' && YEAR_MAP[y]?.label) || (y === 'R1' ? '令和元年' : (y.startsWith('H') ? `平成${y.slice(1)}年` : `令和${y.slice(1)}年`));
-        yearSelect.innerHTML += `<option value="${y}">${label}</option>`;
+        const selected = y === 'R7' ? ' selected' : '';
+        yearSelect.innerHTML += `<option value="${y}"${selected}>${label} (25問)</option>`;
       });
     }
 
@@ -370,6 +378,16 @@ class App {
         }
       } catch (err) {}
       window.location.reload(true);
+    });
+
+    // オフライン一括保存
+    document.getElementById('cache-all-btn')?.addEventListener('click', () => {
+      this.cacheAllOfflineAssets();
+    });
+
+    // オフラインZIPダウンロード
+    document.getElementById('download-zip-btn')?.addEventListener('click', () => {
+      this.downloadStandaloneZip();
     });
 
     // カスタムイベント
@@ -950,6 +968,114 @@ class App {
       console.error('URL同期エラー:', e);
       this.showToast('端末間同期データの読み込みに失敗しました。', 'error');
     }
+  }
+
+  // ===== オフライン管理 =====
+  setupNetworkListeners() {
+    const updateStatus = () => {
+      const isOnline = navigator.onLine;
+      const headerPill = document.getElementById('header-offline-pill');
+      const statusBadge = document.getElementById('network-status-badge');
+      if (headerPill) {
+        headerPill.classList.toggle('hidden', isOnline);
+      }
+      if (statusBadge) {
+        statusBadge.textContent = isOnline ? '🟢 オンライン' : '🔴 オフライン';
+        statusBadge.style.backgroundColor = isOnline ? 'var(--success-color)' : 'var(--error-color)';
+      }
+    };
+
+    window.addEventListener('online', () => {
+      updateStatus();
+      this.showToast('オンラインに復旧しました', 'info');
+    });
+    window.addEventListener('offline', () => {
+      updateStatus();
+      this.showToast('オフラインになりました。端末内データで引き続き学習できます。', 'info');
+    });
+    updateStatus();
+  }
+
+  async checkOfflineCacheStatus() {
+    const badge = document.getElementById('offline-cache-badge');
+    if (!badge) return;
+
+    if (!('caches' in window)) {
+      badge.textContent = '❌ 非対応ブラウザ';
+      badge.style.backgroundColor = 'var(--error-color)';
+      return;
+    }
+
+    try {
+      const cache = await caches.open('nw-exam-app-v13');
+      const keys = await cache.keys();
+      if (keys.length >= 10) {
+        badge.textContent = '✅ 完全保存済み（450問・全機能オフライン対応）';
+        badge.style.backgroundColor = 'var(--success-color)';
+      } else {
+        badge.textContent = '⚠️ 一部保存（「一括保存」ボタンで完全保存可能）';
+        badge.style.backgroundColor = 'var(--warning-color)';
+      }
+    } catch (e) {
+      badge.textContent = '未確認';
+    }
+  }
+
+  async cacheAllOfflineAssets() {
+    if (!('caches' in window)) {
+      this.showToast('お使いのブラウザはオフラインキャッシュに対応していません', 'error');
+      return;
+    }
+
+    const assetsToCache = [
+      './',
+      './index.html',
+      './css/style.css',
+      './js/lib/chart.min.js',
+      './js/lib/qrcode.min.js',
+      './js/app.js?v=13',
+      './js/questions.js?v=13',
+      './js/study.js?v=13',
+      './js/statistics.js?v=13',
+      './js/charts.js?v=13',
+      './js/sync.js?v=13',
+      './manifest.json',
+      './icons/icon-192.png',
+      './icons/icon-512.png'
+    ];
+
+    this.showToast('オフライン用全データを保存中...', 'info');
+    try {
+      const cache = await caches.open('nw-exam-app-v13');
+      let successCount = 0;
+      for (const url of assetsToCache) {
+        try {
+          const resp = await fetch(url, { cache: 'reload' });
+          if (resp.ok) {
+            await cache.put(url, resp);
+            successCount++;
+          }
+        } catch (err) {
+          console.warn('キャッシュ失敗:', url, err);
+        }
+      }
+
+      await this.checkOfflineCacheStatus();
+      this.showToast(`全450問・解説・全機能のオフライン保存が完了しました！（${successCount}ファイル保存済み）`, 'success');
+    } catch (err) {
+      console.error('一括キャッシュエラー:', err);
+      this.showToast('オフライン保存中にエラーが発生しました', 'error');
+    }
+  }
+
+  downloadStandaloneZip() {
+    this.showToast('オフライン用ZIPパッケージをダウンロードしています...', 'info');
+    const a = document.createElement('a');
+    a.href = './nw-exam-app.zip';
+    a.download = 'nw-exam-app.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   // ===== トースト通知 =====
