@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nw-exam-app-v13';
+const CACHE_NAME = 'nw-exam-app-v14';
 const ASSETS = [
   './',
   './index.html',

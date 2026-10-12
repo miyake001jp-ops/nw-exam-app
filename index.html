@@ -117,6 +117,12 @@
                             <span>5連続正解をスキップ</span>
                         </label>
                     </div>
+                    <div class="filter-group filter-checkbox-group">
+                        <label class="checkbox-label" for="study-auto-advance" title="正解時に約1.2秒後に自動で次の問題へ進みます（スクロール・クリック不要）">
+                            <input type="checkbox" id="study-auto-advance">
+                            <span>正解時に自動で次へ</span>
+                        </label>
+                    </div>
                     <button class="btn btn-primary" id="start-study-btn">開始</button>
                 </div>
 
@@ -142,13 +148,19 @@
 
                     <div class="feedback-container card hidden" id="study-feedback">
                         <div class="feedback-header">
-                            <h3 id="study-result-title">正解！</h3>
-                            <div class="mastery-status-container" id="study-mastery-container">
-                                <span class="badge mastery-badge" id="study-streak-badge">🔥 連続正解: 0/5回</span>
-                                <button class="btn btn-small btn-outline" id="study-toggle-skip-btn" type="button" title="この問題のスキップ状態を手動で切り替えます">
-                                    スキップ: <span id="study-skip-status-label">OFF</span>
-                                </button>
+                            <div class="feedback-title-group">
+                                <h3 id="study-result-title">正解！</h3>
+                                <div class="mastery-status-container" id="study-mastery-container">
+                                    <span class="badge mastery-badge" id="study-streak-badge">🔥 連続正解: 0/5回</span>
+                                    <button class="btn btn-small btn-outline" id="study-toggle-skip-btn" type="button" title="この問題のスキップ状態を手動で切り替えます">
+                                        スキップ: <span id="study-skip-status-label">OFF</span>
+                                    </button>
+                                </div>
                             </div>
+                            <!-- スクロール不要で即進める上部「次の問題」ボタン -->
+                            <button class="btn btn-primary feedback-top-next-btn" id="feedback-top-next-btn" type="button" title="次の問題へ進みます（Enter / Spaceキーでも可能）">
+                                次の問題へ進む ▶
+                            </button>
                         </div>
                         <p><strong>正解: <span id="study-correct-ans"></span></strong></p>
                         <div class="explanation" id="study-explanation">解説がここに表示されます。</div>
@@ -162,10 +174,10 @@
                         </div>
                     </div>
 
-                    <div class="nav-controls">
+                    <div class="nav-controls study-nav-sticky">
                         <button class="btn btn-outline" id="study-prev-btn" disabled>前の問題</button>
                         <button class="btn btn-outline" id="study-skip-btn">スキップ</button>
-                        <button class="btn btn-primary" id="study-next-btn">次の問題</button>
+                        <button class="btn btn-primary" id="study-next-btn">次の問題 ▶</button>
                     </div>
                 </div>
             </section>
@@ -358,6 +370,13 @@
                         </label>
                     </div>
                     <div class="setting-item" style="border-top: 1px solid var(--border-color); margin-top: 0.5rem; padding-top: 0.75rem;">
+                        <span>正解時に自動で次の問題へ進む (約1.2秒後)</span>
+                        <label class="switch">
+                            <input type="checkbox" id="settings-auto-advance-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item" style="border-top: 1px solid var(--border-color); margin-top: 0.5rem; padding-top: 0.75rem;">
                         <span>現在スキップ対象の問題数</span>
                         <span id="skipped-count-badge" class="badge" style="background-color: var(--primary-color); color: white; font-size: 0.9rem;">0 問</span>
                     </div>
@@ -451,11 +470,11 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/questions.js?v=13" defer></script>
-    <script src="js/study.js?v=13" defer></script>
-    <script src="js/statistics.js?v=13" defer></script>
-    <script src="js/charts.js?v=13" defer></script>
-    <script src="js/sync.js?v=13" defer></script>
-    <script src="js/app.js?v=13" defer></script>
+    <script src="js/questions.js?v=14" defer></script>
+    <script src="js/study.js?v=14" defer></script>
+    <script src="js/statistics.js?v=14" defer></script>
+    <script src="js/charts.js?v=14" defer></script>
+    <script src="js/sync.js?v=14" defer></script>
+    <script src="js/app.js?v=14" defer></script>
 </body>
 </html>

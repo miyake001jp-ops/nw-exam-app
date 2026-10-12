@@ -9,6 +9,7 @@ class App {
     this.statsManager = null;
     this.chartManager = null;
     this.currentPage = 'home';
+    this.autoAdvanceTimer = null;
   }
 
   async init() {
@@ -38,6 +39,13 @@ class App {
       const studySkipMastered = document.getElementById('study-skip-mastered');
       if (autoSkipToggle) autoSkipToggle.checked = skipSettings.autoSkipEnabled;
       if (studySkipMastered) studySkipMastered.checked = skipSettings.autoSkipEnabled;
+
+      // 自動送り設定読み込み
+      const autoAdvance = await this.db.getSetting('autoAdvance');
+      const studyAutoAdvance = document.getElementById('study-auto-advance');
+      const settingsAutoAdvanceToggle = document.getElementById('settings-auto-advance-toggle');
+      if (studyAutoAdvance) studyAutoAdvance.checked = !!autoAdvance;
+      if (settingsAutoAdvanceToggle) settingsAutoAdvanceToggle.checked = !!autoAdvance;
 
       // URLパラメータ同期チェック (?sync=...)
       const urlParams = new URLSearchParams(window.location.search);
@@ -219,10 +227,26 @@ class App {
     }
 
     // 学習ナビボタン
-    document.getElementById('study-next-btn')?.addEventListener('click', () => this.studyManager.nextQuestion());
-    document.getElementById('feedback-next-btn')?.addEventListener('click', () => this.studyManager.nextQuestion());
-    document.getElementById('study-prev-btn')?.addEventListener('click', () => this.studyManager.prevQuestion());
-    document.getElementById('study-skip-btn')?.addEventListener('click', () => this.studyManager.nextQuestion());
+    document.getElementById('study-next-btn')?.addEventListener('click', () => {
+      this.clearAutoAdvance();
+      this.studyManager.nextQuestion();
+    });
+    document.getElementById('feedback-next-btn')?.addEventListener('click', () => {
+      this.clearAutoAdvance();
+      this.studyManager.nextQuestion();
+    });
+    document.getElementById('feedback-top-next-btn')?.addEventListener('click', () => {
+      this.clearAutoAdvance();
+      this.studyManager.nextQuestion();
+    });
+    document.getElementById('study-prev-btn')?.addEventListener('click', () => {
+      this.clearAutoAdvance();
+      this.studyManager.prevQuestion();
+    });
+    document.getElementById('study-skip-btn')?.addEventListener('click', () => {
+      this.clearAutoAdvance();
+      this.studyManager.nextQuestion();
+    });
 
     // テストナビボタン
     document.getElementById('test-next-btn')?.addEventListener('click', () => this.studyManager.nextQuestion());
@@ -280,6 +304,22 @@ class App {
         this.showToast(isEnabled ? '5回連続正解の自動スキップを有効にしました' : '自動スキップを無効にしました');
       });
     }
+
+    // 正解時の自動送り設定
+    const handleAutoAdvanceChange = async (isEnabled) => {
+      await this.db.saveSetting('autoAdvance', isEnabled);
+      const studyAuto = document.getElementById('study-auto-advance');
+      const settingsAuto = document.getElementById('settings-auto-advance-toggle');
+      if (studyAuto) studyAuto.checked = isEnabled;
+      if (settingsAuto) settingsAuto.checked = isEnabled;
+      this.showToast(isEnabled ? '正解時の自動送り（約1.1秒）を有効にしました' : '自動送りを無効にしました');
+    };
+    document.getElementById('study-auto-advance')?.addEventListener('change', (e) => {
+      handleAutoAdvanceChange(e.target.checked);
+    });
+    document.getElementById('settings-auto-advance-toggle')?.addEventListener('change', (e) => {
+      handleAutoAdvanceChange(e.target.checked);
+    });
 
     // スキップ設定リセット
     const resetSkipsBtn = document.getElementById('reset-skips-btn');
@@ -413,11 +453,13 @@ class App {
         this.handleChoiceClick(map[key]);
         e.preventDefault();
       }
-      if (key === 'ArrowRight' || key === 'Enter') {
+      if (key === 'ArrowRight' || key === 'Enter' || key === ' ' || key === 'Spacebar') {
+        this.clearAutoAdvance();
         this.studyManager.nextQuestion();
         e.preventDefault();
       }
       if (key === 'ArrowLeft') {
+        this.clearAutoAdvance();
         this.studyManager.prevQuestion();
         e.preventDefault();
       }
@@ -508,8 +550,16 @@ class App {
     }
   }
 
+  clearAutoAdvance() {
+    if (this.autoAdvanceTimer) {
+      clearTimeout(this.autoAdvanceTimer);
+      this.autoAdvanceTimer = null;
+    }
+  }
+
   // ===== 選択肢クリック処理 =====
   handleChoiceClick(choice) {
+    this.clearAutoAdvance();
     if (this.studyManager.mode === 'test') {
       this.studyManager.handleAnswer(choice);
     } else {
@@ -582,6 +632,14 @@ class App {
     // 前へボタンの制御
     const prevBtn = document.getElementById(`${container}-prev-btn`);
     if (prevBtn) prevBtn.disabled = detail.index === 0;
+
+    // 次の問題へ遷移した際に、問題カード上部へ自動スクロールして視認性を確保
+    if (!isTest) {
+      const qCard = document.querySelector('#study-area .question-container');
+      if (qCard) {
+        qCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
   }
 
   renderExplanation(detail) {
@@ -635,6 +693,15 @@ class App {
     this.currentExplanationQuestion = detail.question;
     if (detail.mastery) {
       this.updateExplanationMasteryUI(detail.mastery);
+    }
+
+    // 正解時の自動送り（設定ONかつ正解の場合、約1.1秒後に自動で次へ）
+    const isAutoAdvance = document.getElementById('study-auto-advance')?.checked;
+    if (isAutoAdvance && detail.answer && detail.answer.isCorrect) {
+      this.clearAutoAdvance();
+      this.autoAdvanceTimer = setTimeout(() => {
+        this.studyManager.nextQuestion();
+      }, 1100);
     }
   }
 
@@ -1007,7 +1074,7 @@ class App {
     }
 
     try {
-      const cache = await caches.open('nw-exam-app-v13');
+      const cache = await caches.open('nw-exam-app-v14');
       const keys = await cache.keys();
       if (keys.length >= 10) {
         badge.textContent = '✅ 完全保存済み（450問・全機能オフライン対応）';
@@ -1033,12 +1100,12 @@ class App {
       './css/style.css',
       './js/lib/chart.min.js',
       './js/lib/qrcode.min.js',
-      './js/app.js?v=13',
-      './js/questions.js?v=13',
-      './js/study.js?v=13',
-      './js/statistics.js?v=13',
-      './js/charts.js?v=13',
-      './js/sync.js?v=13',
+      './js/app.js?v=14',
+      './js/questions.js?v=14',
+      './js/study.js?v=14',
+      './js/statistics.js?v=14',
+      './js/charts.js?v=14',
+      './js/sync.js?v=14',
       './manifest.json',
       './icons/icon-192.png',
       './icons/icon-512.png'
@@ -1046,7 +1113,7 @@ class App {
 
     this.showToast('オフライン用全データを保存中...', 'info');
     try {
-      const cache = await caches.open('nw-exam-app-v13');
+      const cache = await caches.open('nw-exam-app-v14');
       let successCount = 0;
       for (const url of assetsToCache) {
         try {

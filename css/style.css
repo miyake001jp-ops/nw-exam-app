@@ -507,11 +507,43 @@ select, input[type="text"] {
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.75rem;
     margin-bottom: 0.75rem;
+}
+.feedback-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
 }
 .feedback-header h3 {
     margin: 0;
+    font-size: 1.3rem;
+}
+.feedback-top-next-btn {
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.65rem 1.4rem;
+    min-height: 44px;
+    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.35);
+    border-radius: 8px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    transition: all 0.2s ease;
+}
+.feedback-top-next-btn:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(26, 115, 232, 0.45);
+}
+.feedback-top-next-btn:active {
+    transform: translateY(0);
 }
 .mastery-status-container {
     display: flex;
@@ -567,6 +599,24 @@ select, input[type="text"] {
     gap: 0.5rem;
 }
 .nav-controls .btn { flex: 1; }
+
+/* 追従固定ナビゲーション（スクロール不要で常に画面下部に表示） */
+.study-nav-sticky {
+    position: sticky;
+    bottom: calc(var(--bottom-nav-height) + 8px);
+    background: var(--card-bg);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.14);
+    border: 1px solid var(--border-color);
+    z-index: 95;
+    margin-top: 1.5rem;
+}
+@media (min-width: 768px) {
+    .study-nav-sticky {
+        bottom: 1rem;
+    }
+}
 .submit-control {
     margin-top: 1rem;
 }
